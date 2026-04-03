@@ -145,13 +145,23 @@ button {
   }
 }
 
-/* === Responsive === */
+/* === Responsive: Category Grid === */
 @media (max-width: 768px) {
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
   .hero h1 {
     font-size: 1.75rem;
   }
 
   .hero p {
     font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-grid {
+    grid-template-columns: 1fr !important;
   }
 }
