@@ -6,6 +6,7 @@ import SearchBar from './components/SearchBar.jsx'
 import SearchResults from './components/SearchResults.jsx'
 import ArticleList from './components/ArticleList.jsx'
 import ArticleView from './components/ArticleView.jsx'
+import ChatWidget from './components/ChatWidget/ChatWidget.jsx'
 import {
   CATEGORIES,
   ARTICLES,
@@ -107,6 +108,8 @@ function App() {
           if (!article) return null
           return <ArticleView article={article} onArticleClick={goToArticle} />
         })()}
+
+      <ChatWidget />
     </Layout>
   )
 }
