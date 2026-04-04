@@ -21,6 +21,7 @@ const fabStyle = {
 export default function ChatFab({ isOpen, onClick }) {
   return (
     <button
+      className="chat-fab"
       style={fabStyle}
       onClick={onClick}
       onMouseEnter={(e) => {

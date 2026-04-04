@@ -144,7 +144,7 @@ export default function ChatWidget() {
       <ChatFab isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
 
       {isOpen && (
-        <div style={windowStyle}>
+        <div className="chat-window" style={windowStyle} role="dialog" aria-label="AI-ассистент">
           <div style={headerStyle}>
             <span style={headerTitleStyle}>AI-ассистент</span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

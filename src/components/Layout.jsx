@@ -43,6 +43,7 @@ const backButtonStyle = {
   padding: '6px 16px',
   cursor: 'pointer',
   transition: 'all var(--transition-fast)',
+  minHeight: '36px',
 }
 
 const mainStyle = {
@@ -62,9 +63,12 @@ const footerStyle = {
 
 export default function Layout({ children, showBack, onGoHome }) {
   return (
-    <div className="app">
-      <header style={headerStyle}>
-        <div style={headerContentStyle}>
+    <>
+      <a href="#main-content" className="skip-to-content">
+        Перейти к содержимому
+      </a>
+      <header style={headerStyle} role="banner">
+        <nav style={headerContentStyle} aria-label="Основная навигация">
           <button style={logoStyle} onClick={onGoHome} aria-label="На главную">
             AdCorp Knowledge Base
           </button>
@@ -84,14 +88,16 @@ export default function Layout({ children, showBack, onGoHome }) {
               Главная
             </button>
           )}
-        </div>
+        </nav>
       </header>
 
-      <main style={mainStyle}>{children}</main>
+      <main id="main-content" style={mainStyle} role="main">
+        {children}
+      </main>
 
-      <footer style={footerStyle}>
+      <footer style={footerStyle} role="contentinfo">
         <p>AdCorp Knowledge Base &copy; {new Date().getFullYear()}</p>
       </footer>
-    </div>
+    </>
   )
 }

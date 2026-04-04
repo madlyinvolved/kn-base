@@ -1,11 +1,17 @@
 const navStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
   marginBottom: '24px',
   fontSize: '0.875rem',
   color: 'var(--color-text-secondary)',
+}
+
+const listStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
   flexWrap: 'wrap',
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
 }
 
 const linkStyle = {
@@ -31,37 +37,39 @@ const currentStyle = {
   fontWeight: 500,
 }
 
-/**
- * Breadcrumb navigation
- * @param {Array} items - Array of { label, onClick } objects. Last item has no onClick (current page).
- */
 export default function Breadcrumb({ items }) {
   if (!items || items.length === 0) return null
 
   return (
-    <nav style={navStyle} aria-label="Навигация">
-      {items.map((item, index) => {
-        const isLast = index === items.length - 1
-        return (
-          <span key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {index > 0 && <span style={separatorStyle}>→</span>}
-            {isLast ? (
-              <span style={currentStyle} aria-current="page">
-                {item.label}
-              </span>
-            ) : (
-              <button
-                style={linkStyle}
-                onClick={item.onClick}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-              >
-                {item.label}
-              </button>
-            )}
-          </span>
-        )
-      })}
+    <nav style={navStyle} aria-label="Хлебные крошки">
+      <ol style={listStyle}>
+        {items.map((item, index) => {
+          const isLast = index === items.length - 1
+          return (
+            <li key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {index > 0 && (
+                <span style={separatorStyle} aria-hidden="true">
+                  →
+                </span>
+              )}
+              {isLast ? (
+                <span style={currentStyle} aria-current="page">
+                  {item.label}
+                </span>
+              ) : (
+                <button
+                  style={linkStyle}
+                  onClick={item.onClick}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+                >
+                  {item.label}
+                </button>
+              )}
+            </li>
+          )
+        })}
+      </ol>
     </nav>
   )
 }
