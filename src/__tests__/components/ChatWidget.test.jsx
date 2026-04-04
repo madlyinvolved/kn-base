@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ChatWidget from '../../components/ChatWidget/ChatWidget.jsx'
 
 describe('ChatWidget', () => {
@@ -22,26 +22,32 @@ describe('ChatWidget', () => {
     expect(screen.queryByText('AI-ассистент')).not.toBeInTheDocument()
   })
 
-  it('shows quick questions in empty chat', () => {
+  it('shows quick questions after mode detection', async () => {
     render(<ChatWidget />)
     fireEvent.click(screen.getByLabelText('Открыть AI-ассистент'))
-    expect(screen.getByText('Какой график работы?')).toBeInTheDocument()
+    // Wait for proxy detection to fail (falls back to direct mode)
+    await waitFor(() => {
+      expect(screen.getByText('Какой график работы?')).toBeInTheDocument()
+    })
     expect(screen.getByText('Как оформить отпуск?')).toBeInTheDocument()
   })
 
-  it('shows API key input before key is entered', () => {
+  it('shows API key input in direct mode', async () => {
     render(<ChatWidget />)
     fireEvent.click(screen.getByLabelText('Открыть AI-ассистент'))
-    expect(screen.getByLabelText('Anthropic API ключ')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByLabelText('Anthropic API ключ')).toBeInTheDocument()
+    })
     expect(screen.getByText('Начать чат')).toBeInTheDocument()
   })
 
-  it('quick question fills input when no API key', () => {
+  it('quick question fills input when no API key', async () => {
     render(<ChatWidget />)
     fireEvent.click(screen.getByLabelText('Открыть AI-ассистент'))
+    await waitFor(() => {
+      expect(screen.getByText('Какой график работы?')).toBeInTheDocument()
+    })
     fireEvent.click(screen.getByText('Какой график работы?'))
-    // The input value should be set (we check the message input after entering API key)
-    // For now just verify no crash
     expect(screen.getByLabelText('Anthropic API ключ')).toBeInTheDocument()
   })
 })

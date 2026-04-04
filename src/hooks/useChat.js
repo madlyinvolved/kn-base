@@ -18,6 +18,61 @@ function buildKBContext(articles) {
 
 const MAX_HISTORY = 10
 
+/**
+ * Sends message via server proxy (/api/chat).
+ * Falls back to direct Anthropic API if apiKey is provided.
+ */
+async function callAPI({ apiKey, history, kbContext, signal }) {
+  // Try server proxy first (no API key needed)
+  if (!apiKey) {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: history.map((m) => ({ role: m.role, content: m.content })),
+        knowledgeBase: kbContext,
+      }),
+      signal,
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || `Ошибка сервера: ${response.status}`)
+    }
+
+    return response.json()
+  }
+
+  // Direct browser call with user-provided API key
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}`,
+      messages: history.map((m) => ({ role: m.role, content: m.content })),
+    }),
+    signal,
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    const errMsg =
+      response.status === 401
+        ? 'Неверный API-ключ. Проверьте и попробуйте снова.'
+        : data.error?.message || `Ошибка API: ${response.status}`
+    throw new Error(errMsg)
+  }
+
+  return response.json()
+}
+
 export function useChat(apiKey, articles) {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
@@ -26,7 +81,7 @@ export function useChat(apiKey, articles) {
 
   const sendMessage = useCallback(
     async (text) => {
-      if (!apiKey || !text.trim() || isLoading) return
+      if (!text.trim() || isLoading) return
 
       const userMessage = { role: 'user', content: text.trim() }
       setMessages((prev) => [...prev, userMessage])
@@ -34,44 +89,19 @@ export function useChat(apiKey, articles) {
       setIsLoading(true)
 
       const history = [...messages, userMessage].slice(-MAX_HISTORY)
-
       const kbContext = buildKBContext(articles)
 
       try {
         abortRef.current = new AbortController()
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1024,
-            system: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}`,
-            messages: history.map((m) => ({
-              role: m.role,
-              content: m.content,
-            })),
-          }),
+        const data = await callAPI({
+          apiKey,
+          history,
+          kbContext,
           signal: abortRef.current.signal,
         })
 
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}))
-          const errMsg =
-            response.status === 401
-              ? 'Неверный API-ключ. Проверьте и попробуйте снова.'
-              : data.error?.message || `Ошибка API: ${response.status}`
-          throw new Error(errMsg)
-        }
-
-        const data = await response.json()
         const assistantText = data.content?.[0]?.text || 'Не удалось получить ответ.'
-
         setMessages((prev) => [...prev, { role: 'assistant', content: assistantText }])
       } catch (err) {
         if (err.name === 'AbortError') return

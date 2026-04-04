@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChatFab from './ChatFab.jsx'
 import ChatMessages from './ChatMessages.jsx'
 import ChatInput from './ChatInput.jsx'
@@ -109,13 +109,56 @@ const apiKeyButtonStyle = {
   cursor: 'pointer',
 }
 
+const linkButtonStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--color-accent)',
+  fontSize: '0.75rem',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-body)',
+  padding: '4px 0',
+  textDecoration: 'underline',
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [apiKey, setApiKey] = useState('')
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [inputValue, setInputValue] = useState('')
+  const [mode, setMode] = useState('detecting') // 'detecting' | 'proxy' | 'direct'
 
-  const { messages, isLoading, sendMessage, error } = useChat(apiKey, ARTICLES)
+  const { messages, isLoading, sendMessage, error } = useChat(
+    mode === 'direct' ? apiKey : '',
+    ARTICLES,
+  )
+
+  // Detect if server proxy is available
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+      .then((res) => {
+        if (cancelled) return
+        // 400 = proxy exists but bad request (expected). 500 with "not configured" = proxy exists but no key.
+        // 404 = no proxy.
+        if (res.status === 404) {
+          setMode('direct')
+        } else {
+          setMode('proxy')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMode('direct')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const isReady = mode === 'proxy' || (mode === 'direct' && apiKey)
 
   const handleApiKeySubmit = (e) => {
     e.preventDefault()
@@ -126,10 +169,10 @@ export default function ChatWidget() {
   }
 
   const handleQuickQuestion = (question) => {
-    if (!apiKey) {
-      setInputValue(question)
-    } else {
+    if (isReady) {
       sendMessage(question)
+    } else {
+      setInputValue(question)
     }
   }
 
@@ -138,6 +181,37 @@ export default function ChatWidget() {
   }
 
   const hasMessages = messages.length > 0
+
+  function renderQuickQuestions() {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '8px',
+          justifyContent: 'center',
+        }}
+      >
+        {QUICK_QUESTIONS.map((q) => (
+          <button
+            key={q}
+            style={quickButtonStyle}
+            onClick={() => handleQuickQuestion(q)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--color-accent)'
+              e.currentTarget.style.color = 'var(--color-accent)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--color-border)'
+              e.currentTarget.style.color = 'var(--color-text)'
+            }}
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -148,7 +222,7 @@ export default function ChatWidget() {
           <div style={headerStyle}>
             <span style={headerTitleStyle}>AI-ассистент</span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {apiKey && (
+              {mode === 'direct' && apiKey && (
                 <button
                   style={{ ...minimizeButtonStyle, fontSize: '0.75rem', opacity: 0.8 }}
                   onClick={() => {
@@ -170,39 +244,23 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {!apiKey ? (
+          {mode === 'detecting' && (
+            <div style={emptyStateStyle}>
+              <div style={{ fontSize: '2rem' }}>🤖</div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                Подключение...
+              </p>
+            </div>
+          )}
+
+          {mode === 'direct' && !apiKey && (
             <>
               <div style={emptyStateStyle}>
                 <div style={{ fontSize: '2rem' }}>🤖</div>
                 <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                   Я помогу найти ответ в базе знаний. Для начала введите API-ключ Anthropic.
                 </p>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '8px',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {QUICK_QUESTIONS.map((q) => (
-                    <button
-                      key={q}
-                      style={quickButtonStyle}
-                      onClick={() => handleQuickQuestion(q)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--color-accent)'
-                        e.currentTarget.style.color = 'var(--color-accent)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--color-border)'
-                        e.currentTarget.style.color = 'var(--color-text)'
-                      }}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
+                {renderQuickQuestions()}
               </div>
               <form style={apiKeyFormStyle} onSubmit={handleApiKeySubmit}>
                 <input
@@ -225,7 +283,9 @@ export default function ChatWidget() {
                 </button>
               </form>
             </>
-          ) : (
+          )}
+
+          {isReady && (
             <>
               {!hasMessages && !isLoading ? (
                 <div style={emptyStateStyle}>
@@ -233,32 +293,12 @@ export default function ChatWidget() {
                   <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                     Задайте вопрос по базе знаний AdCorp
                   </p>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {QUICK_QUESTIONS.map((q) => (
-                      <button
-                        key={q}
-                        style={quickButtonStyle}
-                        onClick={() => handleQuickQuestion(q)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = 'var(--color-accent)'
-                          e.currentTarget.style.color = 'var(--color-accent)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'var(--color-border)'
-                          e.currentTarget.style.color = 'var(--color-text)'
-                        }}
-                      >
-                        {q}
-                      </button>
-                    ))}
-                  </div>
+                  {renderQuickQuestions()}
+                  {mode === 'proxy' && (
+                    <button style={linkButtonStyle} onClick={() => setMode('direct')}>
+                      Использовать свой API-ключ
+                    </button>
+                  )}
                 </div>
               ) : (
                 <ChatMessages messages={messages} isLoading={isLoading} />
