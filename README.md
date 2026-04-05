@@ -44,14 +44,14 @@ kn-base/
 
 ## Документация
 
-| Документ | Описание |
-|----------|----------|
-| [SPEC.md](docs/SPEC.md) | Полное ТЗ с разбивкой на задачи |
-| [BACKLOG.md](docs/BACKLOG.md) | Бэклог с трекингом статусов |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архитектура и решения |
-| [TESTING.md](docs/TESTING.md) | Стратегия тестирования |
-| [CONTENT-GUIDE.md](docs/CONTENT-GUIDE.md) | Как добавлять статьи |
-| [REVIEW-CHECKLIST.md](docs/REVIEW-CHECKLIST.md) | Чеклист для PR-ревью |
+| Документ                                        | Описание                        |
+| ----------------------------------------------- | ------------------------------- |
+| [SPEC.md](docs/SPEC.md)                         | Полное ТЗ с разбивкой на задачи |
+| [BACKLOG.md](docs/BACKLOG.md)                   | Бэклог с трекингом статусов     |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)         | Архитектура и решения           |
+| [TESTING.md](docs/TESTING.md)                   | Стратегия тестирования          |
+| [CONTENT-GUIDE.md](docs/CONTENT-GUIDE.md)       | Как добавлять статьи            |
+| [REVIEW-CHECKLIST.md](docs/REVIEW-CHECKLIST.md) | Чеклист для PR-ревью            |
 
 ## Скрипты
 

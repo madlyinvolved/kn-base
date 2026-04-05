@@ -1,0 +1,52 @@
+{
+  "name": "kn-base",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Internal knowledge base portal for AdCorp",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "seed": "node supabase/seed/seed.js"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.101.1",
+    "@tiptap/extension-image": "^3.22.2",
+    "@tiptap/extension-link": "^3.22.2",
+    "@tiptap/extension-placeholder": "^3.22.2",
+    "@tiptap/extension-table": "^3.22.2",
+    "@tiptap/extension-table-cell": "^3.22.2",
+    "@tiptap/extension-table-header": "^3.22.2",
+    "@tiptap/extension-table-row": "^3.22.2",
+    "@tiptap/extension-underline": "^3.22.2",
+    "@tiptap/extension-youtube": "^3.22.2",
+    "@tiptap/react": "^3.22.2",
+    "@tiptap/starter-kit": "^3.22.2",
+    "next": "^16.2.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
+    "jsdom": "^29.0.1",
+    "prettier": "^3.8.1",
+    "vitest": "^4.1.2"
+  }
+}
