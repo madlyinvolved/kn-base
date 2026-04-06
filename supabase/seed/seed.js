@@ -9,6 +9,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { CATEGORIES, ARTICLES } from '../../lib/data/knowledge-base.js'
+import { textToTipTapJSON } from '../../lib/utils/tiptap.js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -51,7 +52,7 @@ async function seed() {
     category_id: article.category,
     title: article.title,
     summary: article.summary,
-    content: {},
+    content: textToTipTapJSON(article.content),
     content_text: article.content || '',
     is_published: true,
   }))
