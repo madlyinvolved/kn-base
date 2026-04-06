@@ -17,6 +17,14 @@ const editorWrapperStyle = {
   overflow: 'hidden',
 }
 
+function emitUpdate(editor, onUpdate) {
+  onUpdate({
+    json: editor.getJSON(),
+    text: editor.getText(),
+    html: editor.getHTML(),
+  })
+}
+
 export default function ArticleEditor({ content, onUpdate }) {
   const editor = useEditor({
     extensions: [
@@ -34,12 +42,11 @@ export default function ArticleEditor({ content, onUpdate }) {
       Placeholder.configure({ placeholder: 'Начните писать статью...' }),
     ],
     content: content || '',
+    onCreate: ({ editor: ed }) => {
+      emitUpdate(ed, onUpdate)
+    },
     onUpdate: ({ editor: ed }) => {
-      onUpdate({
-        json: ed.getJSON(),
-        text: ed.getText(),
-        html: ed.getHTML(),
-      })
+      emitUpdate(ed, onUpdate)
     },
   })
 

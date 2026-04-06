@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '../../../../../lib/supabase/client.js'
 import ArticleEditor from '../../../../../components/admin/ArticleEditor.jsx'
+import { textToTipTapJSON, isValidTipTapDoc } from '../../../../../lib/utils/tiptap.js'
 
 const titleStyle = {
   fontFamily: 'var(--font-display)',
@@ -109,21 +110,11 @@ export default function EditArticlePage() {
         setCategoryId(article.category_id)
         setIsPublished(article.is_published)
 
-        // If content is TipTap JSON, use it; otherwise create paragraph from text
-        const hasJsonContent =
-          article.content && typeof article.content === 'object' && article.content.type === 'doc'
-        if (hasJsonContent) {
+        // Use TipTap JSON if valid, otherwise convert plain text
+        if (isValidTipTapDoc(article.content)) {
           setInitialContent(article.content)
         } else if (article.content_text) {
-          setInitialContent({
-            type: 'doc',
-            content: article.content_text
-              .split('\n\n')
-              .map((p) => ({
-                type: 'paragraph',
-                content: p ? [{ type: 'text', text: p }] : [],
-              })),
-          })
+          setInitialContent(textToTipTapJSON(article.content_text))
         }
       }
 

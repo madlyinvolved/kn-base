@@ -5,7 +5,6 @@ import ChatFab from './ChatFab.jsx'
 import ChatMessages from './ChatMessages.jsx'
 import ChatInput from './ChatInput.jsx'
 import { useChat } from '../../../lib/hooks/useChat.js'
-import { ARTICLES } from '../../../lib/data/knowledge-base.js'
 
 const QUICK_QUESTIONS = [
   'Какой график работы?',
@@ -79,60 +78,12 @@ const quickButtonStyle = {
   transition: 'all var(--transition-fast)',
 }
 
-const apiKeyFormStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
-  padding: '20px 16px',
-  borderTop: '1px solid var(--color-border-light)',
-  background: 'var(--color-surface)',
-}
-
-const apiKeyInputStyle = {
-  padding: '10px 14px',
-  fontSize: '0.8125rem',
-  fontFamily: 'var(--font-body)',
-  border: '1px solid var(--color-border)',
-  borderRadius: '10px',
-  outline: 'none',
-  background: 'var(--color-bg)',
-  color: 'var(--color-text)',
-}
-
-const apiKeyButtonStyle = {
-  padding: '10px',
-  fontSize: '0.8125rem',
-  fontFamily: 'var(--font-body)',
-  fontWeight: 600,
-  background: 'var(--color-accent)',
-  color: 'white',
-  border: 'none',
-  borderRadius: '10px',
-  cursor: 'pointer',
-}
-
-const linkButtonStyle = {
-  background: 'none',
-  border: 'none',
-  color: 'var(--color-accent)',
-  fontSize: '0.75rem',
-  cursor: 'pointer',
-  fontFamily: 'var(--font-body)',
-  padding: '4px 0',
-  textDecoration: 'underline',
-}
-
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
-  const [apiKey, setApiKey] = useState('')
-  const [apiKeyInput, setApiKeyInput] = useState('')
   const [inputValue, setInputValue] = useState('')
-  const [mode, setMode] = useState('detecting')
+  const [available, setAvailable] = useState('detecting')
 
-  const { messages, isLoading, sendMessage, error } = useChat(
-    mode === 'direct' ? apiKey : '',
-    ARTICLES,
-  )
+  const { messages, isLoading, sendMessage, error } = useChat()
 
   useEffect(() => {
     let cancelled = false
@@ -143,32 +94,22 @@ export default function ChatWidget() {
     })
       .then((res) => {
         if (cancelled) return
-        if (res.status === 404) {
-          setMode('direct')
+        if (res.status === 500) {
+          setAvailable('unavailable')
         } else {
-          setMode('proxy')
+          setAvailable('ready')
         }
       })
       .catch(() => {
-        if (!cancelled) setMode('direct')
+        if (!cancelled) setAvailable('unavailable')
       })
     return () => {
       cancelled = true
     }
   }, [])
 
-  const isReady = mode === 'proxy' || (mode === 'direct' && apiKey)
-
-  const handleApiKeySubmit = (e) => {
-    e.preventDefault()
-    const key = apiKeyInput.trim()
-    if (key) {
-      setApiKey(key)
-    }
-  }
-
   const handleQuickQuestion = (question) => {
-    if (isReady) {
+    if (available === 'ready') {
       sendMessage(question)
     } else {
       setInputValue(question)
@@ -220,84 +161,45 @@ export default function ChatWidget() {
         <div className="chat-window" style={windowStyle} role="dialog" aria-label="AI-ассистент">
           <div style={headerStyle}>
             <span style={headerTitleStyle}>AI-ассистент</span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {mode === 'direct' && apiKey && (
-                <button
-                  style={{ ...minimizeButtonStyle, fontSize: '0.75rem', opacity: 0.8 }}
-                  onClick={() => {
-                    setApiKey('')
-                    setApiKeyInput('')
-                  }}
-                  title="Сменить API-ключ"
-                >
-                  🔑
-                </button>
-              )}
-              <button
-                style={minimizeButtonStyle}
-                onClick={() => setIsOpen(false)}
-                aria-label="Свернуть чат"
-              >
-                ‒
-              </button>
-            </div>
+            <button
+              style={minimizeButtonStyle}
+              onClick={() => setIsOpen(false)}
+              aria-label="Свернуть чат"
+            >
+              ‒
+            </button>
           </div>
 
-          {mode === 'detecting' && (
+          {available === 'detecting' && (
             <div style={emptyStateStyle}>
-              <div style={{ fontSize: '2rem' }}>🤖</div>
+              <div style={{ fontSize: '2rem' }}>&#x1f916;</div>
               <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                 Подключение...
               </p>
             </div>
           )}
 
-          {mode === 'direct' && !apiKey && (
-            <>
-              <div style={emptyStateStyle}>
-                <div style={{ fontSize: '2rem' }}>🤖</div>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  Я помогу найти ответ в базе знаний. Для начала введите API-ключ Anthropic.
-                </p>
-                {renderQuickQuestions()}
-              </div>
-              <form style={apiKeyFormStyle} onSubmit={handleApiKeySubmit}>
-                <input
-                  style={apiKeyInputStyle}
-                  type="password"
-                  placeholder="sk-ant-api03-..."
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  aria-label="Anthropic API ключ"
-                />
-                <button
-                  type="submit"
-                  style={{
-                    ...apiKeyButtonStyle,
-                    opacity: apiKeyInput.trim() ? 1 : 0.5,
-                  }}
-                  disabled={!apiKeyInput.trim()}
-                >
-                  Начать чат
-                </button>
-              </form>
-            </>
+          {available === 'unavailable' && (
+            <div style={emptyStateStyle}>
+              <div style={{ fontSize: '2rem' }}>&#x1f6a7;</div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                Чат-бот временно недоступен
+              </p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', opacity: 0.7 }}>
+                Обратитесь к администратору для настройки сервиса
+              </p>
+            </div>
           )}
 
-          {isReady && (
+          {available === 'ready' && (
             <>
               {!hasMessages && !isLoading ? (
                 <div style={emptyStateStyle}>
-                  <div style={{ fontSize: '2rem' }}>🤖</div>
+                  <div style={{ fontSize: '2rem' }}>&#x1f916;</div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                     Задайте вопрос по базе знаний AdCorp
                   </p>
                   {renderQuickQuestions()}
-                  {mode === 'proxy' && (
-                    <button style={linkButtonStyle} onClick={() => setMode('direct')}>
-                      Использовать свой API-ключ
-                    </button>
-                  )}
                 </div>
               ) : (
                 <ChatMessages messages={messages} isLoading={isLoading} />
