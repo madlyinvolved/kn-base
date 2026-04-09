@@ -52,7 +52,7 @@ export async function POST(request) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'google/gemma-3-1b-it:free',
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
         messages: openaiMessages,
         max_tokens: 1024,
       }),
