@@ -19,9 +19,9 @@ async function buildKBContext() {
 }
 
 export async function POST(request) {
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 })
+    return NextResponse.json({ error: 'OPENROUTER_API_KEY not configured' }, { status: 500 })
   }
 
   let body
@@ -40,38 +40,35 @@ export async function POST(request) {
   try {
     const kbContext = await buildKBContext()
 
-    const geminiMessages = messages.slice(-10).map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }))
+    const openaiMessages = [
+      { role: 'system', content: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}` },
+      ...messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+    ]
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
-
-    const response = await fetch(url, {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}` }],
-        },
-        contents: geminiMessages,
-        generationConfig: {
-          maxOutputTokens: 1024,
-        },
+        model: 'google/gemma-3-27b-it:free',
+        messages: openaiMessages,
+        max_tokens: 1024,
       }),
     })
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}))
-      const errMsg = data.error?.message || `Gemini API error: ${response.status}`
+      const errMsg = data.error?.message || `OpenRouter API error: ${response.status}`
       return NextResponse.json({ error: errMsg }, { status: response.status })
     }
 
     const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    const text = data.choices?.[0]?.message?.content || ''
 
     return NextResponse.json({ content: [{ text }] })
   } catch {
-    return NextResponse.json({ error: 'Failed to reach Gemini API' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to reach OpenRouter API' }, { status: 500 })
   }
 }
