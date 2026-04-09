@@ -19,9 +19,9 @@ async function buildKBContext() {
 }
 
 export async function POST(request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
+    return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 })
   }
 
   let body
@@ -40,35 +40,38 @@ export async function POST(request) {
   try {
     const kbContext = await buildKBContext()
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const geminiMessages = messages.slice(-10).map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }))
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}`,
-        messages: messages.slice(-10).map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        system_instruction: {
+          parts: [{ text: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}` }],
+        },
+        contents: geminiMessages,
+        generationConfig: {
+          maxOutputTokens: 1024,
+        },
       }),
     })
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}))
-      return NextResponse.json(
-        { error: data.error?.message || `Anthropic API error: ${response.status}` },
-        { status: response.status },
-      )
+      const errMsg = data.error?.message || `Gemini API error: ${response.status}`
+      return NextResponse.json({ error: errMsg }, { status: response.status })
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    return NextResponse.json({ content: [{ text }] })
   } catch {
-    return NextResponse.json({ error: 'Failed to reach Anthropic API' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to reach Gemini API' }, { status: 500 })
   }
 }
