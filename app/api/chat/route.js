@@ -19,9 +19,9 @@ async function buildKBContext() {
 }
 
 export async function POST(request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
+    return NextResponse.json({ error: 'OPENROUTER_API_KEY not configured' }, { status: 500 })
   }
 
   let body
@@ -40,35 +40,35 @@ export async function POST(request) {
   try {
     const kbContext = await buildKBContext()
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const openaiMessages = [
+      { role: 'system', content: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}` },
+      ...messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+    ]
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'google/gemma-3-27b-it:free',
+        messages: openaiMessages,
         max_tokens: 1024,
-        system: `${SYSTEM_PROMPT}\n\nБаза знаний:\n${kbContext}`,
-        messages: messages.slice(-10).map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
       }),
     })
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}))
-      return NextResponse.json(
-        { error: data.error?.message || `Anthropic API error: ${response.status}` },
-        { status: response.status },
-      )
+      const errMsg = data.error?.message || `OpenRouter API error: ${response.status}`
+      return NextResponse.json({ error: errMsg }, { status: response.status })
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    const text = data.choices?.[0]?.message?.content || ''
+
+    return NextResponse.json({ content: [{ text }] })
   } catch {
-    return NextResponse.json({ error: 'Failed to reach Anthropic API' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to reach OpenRouter API' }, { status: 500 })
   }
 }
