@@ -14,7 +14,6 @@ const editorWrapperStyle = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-border)',
   borderRadius: '12px',
-  overflow: 'hidden',
 }
 
 function emitUpdate(editor, onUpdate) {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { renderContent } from '../../lib/utils/renderContent.jsx'
+import { renderContent, renderTipTapContent } from '../../lib/utils/renderContent.jsx'
 
 const relatedSectionStyle = {
   marginTop: '48px',
@@ -55,16 +55,29 @@ export default function ArticleView({ article, category, relatedArticles }) {
         {article.title}
       </h1>
 
-      <div
-        style={{
-          whiteSpace: 'pre-wrap',
-          lineHeight: 1.8,
-          fontSize: '1rem',
-          color: 'var(--color-text)',
-        }}
-      >
-        {renderContent(article.content, handleArticleClick)}
-      </div>
+      {article.contentJson ? (
+        <div
+          className="tiptap-editor"
+          style={{
+            lineHeight: 1.8,
+            fontSize: '1rem',
+            color: 'var(--color-text)',
+          }}
+        >
+          <div className="tiptap">{renderTipTapContent(article.contentJson)}</div>
+        </div>
+      ) : (
+        <div
+          style={{
+            whiteSpace: 'pre-wrap',
+            lineHeight: 1.8,
+            fontSize: '1rem',
+            color: 'var(--color-text)',
+          }}
+        >
+          {renderContent(article.content, handleArticleClick)}
+        </div>
+      )}
 
       {relatedArticles.length > 0 && (
         <div style={relatedSectionStyle}>

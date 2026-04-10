@@ -10,6 +10,9 @@ const toolbarStyle = {
   padding: '8px 12px',
   borderBottom: '1px solid var(--color-border)',
   background: 'var(--color-bg)',
+  position: 'sticky',
+  top: 72,
+  zIndex: 20,
 }
 
 const btnBase = {
@@ -47,6 +50,9 @@ export default function EditorToolbar({ editor }) {
   const [linkUrl, setLinkUrl] = useState('')
   const [showVideoInput, setShowVideoInput] = useState(false)
   const [videoUrl, setVideoUrl] = useState('')
+  const [showTableDialog, setShowTableDialog] = useState(false)
+  const [tableRows, setTableRows] = useState(3)
+  const [tableCols, setTableCols] = useState(3)
 
   if (!editor) return null
 
@@ -130,7 +136,14 @@ export default function EditorToolbar({ editor }) {
   }
 
   function handleInsertTable() {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+    setShowTableDialog(true)
+  }
+
+  function confirmInsertTable() {
+    const rows = Math.max(1, Math.min(20, Number(tableRows) || 1))
+    const cols = Math.max(1, Math.min(10, Number(tableCols) || 1))
+    editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run()
+    setShowTableDialog(false)
   }
 
   return (
@@ -237,6 +250,61 @@ export default function EditorToolbar({ editor }) {
           >
             Отмена
           </button>
+        </div>
+      )}
+
+      {showTableDialog && (
+        <div className="editor-modal-overlay" onClick={() => setShowTableDialog(false)}>
+          <div className="editor-modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Вставить таблицу</h3>
+            <div className="editor-modal-row">
+              <label htmlFor="table-rows">Строки</label>
+              <input
+                id="table-rows"
+                type="number"
+                min="1"
+                max="20"
+                value={tableRows}
+                onChange={(e) => setTableRows(e.target.value)}
+              />
+            </div>
+            <div className="editor-modal-row">
+              <label htmlFor="table-cols">Столбцы</label>
+              <input
+                id="table-cols"
+                type="number"
+                min="1"
+                max="10"
+                value={tableCols}
+                onChange={(e) => setTableCols(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button
+                type="button"
+                style={{
+                  ...btnBase,
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                }}
+                onClick={() => setShowTableDialog(false)}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                style={{
+                  ...btnBase,
+                  background: 'var(--color-accent)',
+                  color: 'white',
+                  border: '1px solid var(--color-accent)',
+                }}
+                onClick={confirmInsertTable}
+              >
+                Вставить
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

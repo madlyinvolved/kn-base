@@ -1,6 +1,8 @@
+import Link from 'next/link'
+
 /**
- * Parses article content and converts [[id|text]] syntax to clickable links.
- * Returns an array of strings and React elements.
+ * Parses article content (plain text with [[id|text]] syntax) and converts
+ * the special links to clickable spans. Returns an array of strings and React elements.
  */
 export function renderContent(text, onArticleClick) {
   if (!text) return text
@@ -47,4 +49,144 @@ export function renderContent(text, onArticleClick) {
   }
 
   return parts.length === 1 && typeof parts[0] === 'string' ? parts[0] : parts
+}
+
+/**
+ * Renders a TipTap JSON document as React elements. Supports the node and
+ * mark types used by the article editor so the portal, preview, and editor
+ * share the same output.
+ */
+export function renderTipTapContent(doc) {
+  if (!doc || typeof doc !== 'object' || doc.type !== 'doc') return null
+  return renderNodes(doc.content, 'root')
+}
+
+function renderNodes(nodes, prefix) {
+  if (!Array.isArray(nodes)) return null
+  return nodes.map((n, i) => renderNode(n, `${prefix}-${i}`))
+}
+
+function renderNode(node, key) {
+  if (!node) return null
+  const children = node.content ? renderNodes(node.content, key) : null
+
+  switch (node.type) {
+    case 'paragraph':
+      return <p key={key}>{children}</p>
+    case 'heading': {
+      const level = node.attrs?.level || 2
+      if (level === 3) return <h3 key={key}>{children}</h3>
+      return <h2 key={key}>{children}</h2>
+    }
+    case 'bulletList':
+      return <ul key={key}>{children}</ul>
+    case 'orderedList':
+      return <ol key={key}>{children}</ol>
+    case 'listItem':
+      return <li key={key}>{children}</li>
+    case 'blockquote':
+      return <blockquote key={key}>{children}</blockquote>
+    case 'horizontalRule':
+      return <hr key={key} />
+    case 'codeBlock':
+      return (
+        <pre key={key}>
+          <code>{children}</code>
+        </pre>
+      )
+    case 'hardBreak':
+      return <br key={key} />
+    case 'image':
+      return renderImage(node, key)
+    case 'table':
+      return (
+        <table key={key}>
+          <tbody>{children}</tbody>
+        </table>
+      )
+    case 'tableRow':
+      return <tr key={key}>{children}</tr>
+    case 'tableCell':
+      return <td key={key}>{children}</td>
+    case 'tableHeader':
+      return <th key={key}>{children}</th>
+    case 'text':
+      return renderTextNode(node, key)
+    default:
+      return children
+  }
+}
+
+function renderImage(node, key) {
+  const attrs = node.attrs || {}
+  const style = {}
+  if (attrs.width) style.width = `${attrs.width}%`
+  const align = attrs.align
+  if (align === 'center') {
+    style.display = 'block'
+    style.marginLeft = 'auto'
+    style.marginRight = 'auto'
+  } else if (align === 'left') {
+    style.display = 'block'
+    style.marginRight = 'auto'
+    style.marginLeft = 0
+  } else if (align === 'right') {
+    style.display = 'block'
+    style.marginLeft = 'auto'
+    style.marginRight = 0
+  }
+
+  const img = <img src={attrs.src} alt={attrs.alt || ''} style={style} />
+
+  if (attrs.caption) {
+    return (
+      <figure key={key} style={{ margin: '1em 0' }}>
+        {img}
+        <figcaption
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--color-text-secondary)',
+            fontStyle: 'italic',
+            textAlign: 'center',
+            marginTop: '6px',
+          }}
+        >
+          {attrs.caption}
+        </figcaption>
+      </figure>
+    )
+  }
+
+  return <span key={key}>{img}</span>
+}
+
+function renderTextNode(node, key) {
+  let el = node.text
+  const marks = node.marks || []
+
+  for (const mark of marks) {
+    if (mark.type === 'bold') el = <strong>{el}</strong>
+    else if (mark.type === 'italic') el = <em>{el}</em>
+    else if (mark.type === 'underline') el = <u>{el}</u>
+    else if (mark.type === 'strike') el = <s>{el}</s>
+    else if (mark.type === 'code') el = <code>{el}</code>
+    else if (mark.type === 'link') {
+      const href = mark.attrs?.href || '#'
+      if (href.startsWith('/article/')) {
+        el = (
+          <Link href={href} style={{ color: 'var(--color-accent)' }}>
+            {el}
+          </Link>
+        )
+      } else {
+        el = (
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {el}
+          </a>
+        )
+      }
+    }
+  }
+
+  return <span key={key}>{el}</span>
 }
