@@ -11,23 +11,13 @@ import EditorToolbar from './EditorToolbar.jsx'
 import { CustomImage } from './ImageNode.jsx'
 import { ContactCards } from './ContactCardsNode.jsx'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const editorWrapperStyle = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-border)',
   borderRadius: '12px',
-}
-
-const statusBarStyle = {
-  display: 'flex',
-  gap: '16px',
-  padding: '8px 16px',
-  borderTop: '1px solid var(--color-border)',
-  fontSize: '0.75rem',
-  color: 'var(--color-text-secondary)',
-  background: 'var(--color-bg)',
-  borderRadius: '0 0 12px 12px',
+  transition: 'border-color 150ms ease',
 }
 
 function emitUpdate(editor, onUpdate) {
@@ -69,15 +59,17 @@ function countWords(text) {
 
 function readingTime(words) {
   const minutes = Math.ceil(words / 200)
-  if (minutes <= 1) return '< 1 мин'
-  if (minutes >= 5 && minutes <= 20) return `${minutes} мин`
-  const last = minutes % 10
-  if (last === 1) return `${minutes} мин`
-  if (last >= 2 && last <= 4) return `${minutes} мин`
-  return `${minutes} мин`
+  if (minutes <= 1) return '~1 мин'
+  return `~${minutes} мин`
 }
 
-export default function ArticleEditor({ content, onUpdate }) {
+function pluralWords(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'слово'
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'слова'
+  return 'слов'
+}
+
+export default function ArticleEditor({ content, onUpdate, saveStatus }) {
   const [wordCount, setWordCount] = useState(0)
 
   const editor = useEditor({
@@ -140,7 +132,7 @@ export default function ArticleEditor({ content, onUpdate }) {
       <EditorToolbar editor={editor} />
       <div
         style={{
-          padding: '20px',
+          padding: '20px 24px',
           minHeight: '300px',
           fontSize: '0.9375rem',
           lineHeight: 1.7,
@@ -149,10 +141,27 @@ export default function ArticleEditor({ content, onUpdate }) {
       >
         <EditorContent editor={editor} />
       </div>
-      <div style={statusBarStyle}>
-        <span>{wordCount} {wordCount === 1 ? 'слово' : wordCount >= 2 && wordCount <= 4 ? 'слова' : 'слов'}</span>
-        <span>·</span>
-        <span>Чтение: {readingTime(wordCount)}</span>
+      <div
+        style={{
+          display: 'flex',
+          gap: '6px',
+          padding: '6px 16px',
+          borderTop: '1px solid var(--color-border)',
+          fontSize: '0.6875rem',
+          color: 'var(--color-text-secondary)',
+          background: 'var(--color-bg)',
+          borderRadius: '0 0 12px 12px',
+        }}
+      >
+        <span>{wordCount} {pluralWords(wordCount)}</span>
+        <span style={{ opacity: 0.4 }}>·</span>
+        <span>{readingTime(wordCount)} чтения</span>
+        {saveStatus && (
+          <>
+            <span style={{ opacity: 0.4 }}>·</span>
+            <span>{saveStatus}</span>
+          </>
+        )}
       </div>
     </div>
   )

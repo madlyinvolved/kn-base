@@ -10,12 +10,13 @@ const toolbarStyle = {
   padding: '8px 12px',
   borderBottom: '1px solid var(--color-border)',
   background: 'var(--color-bg)',
+  borderRadius: '12px 12px 0 0',
   position: 'sticky',
   top: 72,
   zIndex: 20,
 }
 
-const btnBase = {
+const btnStyle = {
   padding: '6px 10px',
   fontSize: '0.8125rem',
   fontFamily: 'var(--font-body)',
@@ -31,19 +32,24 @@ const btnBase = {
   justifyContent: 'center',
 }
 
-const activeBtn = {
-  ...btnBase,
+const btnActive = {
+  ...btnStyle,
   background: 'var(--color-accent)',
   color: 'white',
 }
 
-const separatorStyle = {
-  width: '1px',
-  height: '24px',
-  background: 'var(--color-border)',
-  margin: '0 4px',
-  alignSelf: 'center',
-}
+const sep = (
+  <span
+    style={{
+      width: '1px',
+      height: '20px',
+      background: 'var(--color-border)',
+      margin: '0 6px',
+      alignSelf: 'center',
+      flexShrink: 0,
+    }}
+  />
+)
 
 export default function EditorToolbar({ editor }) {
   const [showLinkInput, setShowLinkInput] = useState(false)
@@ -57,13 +63,13 @@ export default function EditorToolbar({ editor }) {
 
   if (!editor) return null
 
-  function btn(label, action, isActive) {
+  function btn(label, action, isActive, title) {
     return (
       <button
         type="button"
-        style={isActive ? activeBtn : btnBase}
+        style={isActive ? btnActive : btnStyle}
         onClick={action}
-        title={label}
+        title={title || label}
       >
         {label}
       </button>
@@ -117,10 +123,6 @@ export default function EditorToolbar({ editor }) {
     }
   }
 
-  function handleInsertTable() {
-    setShowTableDialog(true)
-  }
-
   function confirmInsertTable() {
     const rows = Math.max(1, Math.min(20, Number(tableRows) || 1))
     const cols = Math.max(1, Math.min(10, Number(tableCols) || 1))
@@ -128,75 +130,82 @@ export default function EditorToolbar({ editor }) {
     setShowTableDialog(false)
   }
 
+  const inlineInputStyle = {
+    flex: 1,
+    padding: '6px 10px',
+    fontSize: '0.8125rem',
+    border: '1px solid var(--color-border)',
+    borderRadius: '6px',
+    outline: 'none',
+  }
+
   return (
     <div>
       <div style={toolbarStyle}>
-        {btn('B', () => editor.chain().focus().toggleBold().run(), editor.isActive('bold'))}
-        {btn('I', () => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'))}
-        {btn('U', () => editor.chain().focus().toggleUnderline().run(), editor.isActive('underline'))}
-        {btn('S', () => editor.chain().focus().toggleStrike().run(), editor.isActive('strike'))}
+        {/* Group 1: Text formatting */}
+        {btn('B', () => editor.chain().focus().toggleBold().run(), editor.isActive('bold'), 'Жирный')}
+        {btn('I', () => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'), 'Курсив')}
+        {btn('U', () => editor.chain().focus().toggleUnderline().run(), editor.isActive('underline'), 'Подчёркнутый')}
+        {btn('S', () => editor.chain().focus().toggleStrike().run(), editor.isActive('strike'), 'Зачёркнутый')}
 
-        <span style={separatorStyle} />
+        {sep}
 
-        {btn('H2', () => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }))}
-        {btn('H3', () => editor.chain().focus().toggleHeading({ level: 3 }).run(), editor.isActive('heading', { level: 3 }))}
+        {/* Group 2: Headings */}
+        {btn('H2', () => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }), 'Заголовок 2')}
+        {btn('H3', () => editor.chain().focus().toggleHeading({ level: 3 }).run(), editor.isActive('heading', { level: 3 }), 'Заголовок 3')}
 
-        <span style={separatorStyle} />
+        {sep}
 
-        {btn('•', () => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'))}
-        {btn('1.', () => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'))}
-        {btn('❝', () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'))}
-        {btn('—', () => editor.chain().focus().setHorizontalRule().run(), false)}
-        {btn('</>', () => editor.chain().focus().toggleCodeBlock().run(), editor.isActive('codeBlock'))}
+        {/* Group 3: Lists, quote, rule, code */}
+        {btn('•', () => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'), 'Маркированный список')}
+        {btn('1.', () => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'), 'Нумерованный список')}
+        {btn('❝', () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'), 'Цитата')}
+        {btn('—', () => editor.chain().focus().setHorizontalRule().run(), false, 'Разделитель')}
+        {btn('</>', () => editor.chain().focus().toggleCodeBlock().run(), editor.isActive('codeBlock'), 'Код')}
 
-        <span style={separatorStyle} />
+        {sep}
 
-        {btn('🔗', handleSetLink, editor.isActive('link'))}
+        {/* Group 4: Link, photo, video */}
+        {btn('🔗', handleSetLink, editor.isActive('link'), 'Ссылка')}
         {editor.isActive('link') &&
-          btn('✂️', () => editor.chain().focus().unsetLink().run(), false)}
-
-        <span style={separatorStyle} />
-
+          btn('✂️', () => editor.chain().focus().unsetLink().run(), false, 'Убрать ссылку')}
         <button
           type="button"
-          style={btnBase}
+          style={btnStyle}
           onClick={handleInsertImage}
           disabled={uploadingImage}
           title="Загрузить фото"
         >
-          {uploadingImage ? '…' : '↑ Фото'}
+          {uploadingImage ? '…' : '↑Фото'}
         </button>
-        {btn('▶️', handleInsertVideo, false)}
-        {btn('📊', handleInsertTable, false)}
-        {btn('👥', () => editor.chain().focus().insertContent({ type: 'contactCards' }).run(), false)}
+        {btn('🎬', handleInsertVideo, false, 'Видео')}
+
+        {sep}
+
+        {/* Group 5: Table, contacts */}
+        {btn('📊', () => setShowTableDialog(true), false, 'Таблица')}
+        {btn('👥', () => editor.chain().focus().insertContent({ type: 'contactCards' }).run(), false, 'Карточка контактов')}
       </div>
 
       {showLinkInput && (
-        <div style={{ ...toolbarStyle, gap: '8px' }}>
+        <div style={{ ...toolbarStyle, gap: '8px', borderRadius: 0 }}>
           <input
             type="url"
             placeholder="https://..."
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '6px 10px',
-              fontSize: '0.8125rem',
-              border: '1px solid var(--color-border)',
-              borderRadius: '6px',
-              outline: 'none',
-            }}
+            style={inlineInputStyle}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSetLink()
             }}
             autoFocus
           />
-          <button type="button" style={btnBase} onClick={handleSetLink}>
+          <button type="button" style={btnStyle} onClick={handleSetLink}>
             Вставить
           </button>
           <button
             type="button"
-            style={btnBase}
+            style={btnStyle}
             onClick={() => {
               setShowLinkInput(false)
               setLinkUrl('')
@@ -208,31 +217,24 @@ export default function EditorToolbar({ editor }) {
       )}
 
       {showVideoInput && (
-        <div style={{ ...toolbarStyle, gap: '8px' }}>
+        <div style={{ ...toolbarStyle, gap: '8px', borderRadius: 0 }}>
           <input
             type="url"
             placeholder="YouTube или Vimeo URL..."
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '6px 10px',
-              fontSize: '0.8125rem',
-              border: '1px solid var(--color-border)',
-              borderRadius: '6px',
-              outline: 'none',
-            }}
+            style={inlineInputStyle}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleInsertVideo()
             }}
             autoFocus
           />
-          <button type="button" style={btnBase} onClick={handleInsertVideo}>
+          <button type="button" style={btnStyle} onClick={handleInsertVideo}>
             Вставить
           </button>
           <button
             type="button"
-            style={btnBase}
+            style={btnStyle}
             onClick={() => {
               setShowVideoInput(false)
               setVideoUrl('')
@@ -272,23 +274,14 @@ export default function EditorToolbar({ editor }) {
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
               <button
                 type="button"
-                style={{
-                  ...btnBase,
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                }}
+                className="editor-btn-outline"
                 onClick={() => setShowTableDialog(false)}
               >
                 Отмена
               </button>
               <button
                 type="button"
-                style={{
-                  ...btnBase,
-                  background: 'var(--color-accent)',
-                  color: 'white',
-                  border: '1px solid var(--color-accent)',
-                }}
+                className="editor-btn-primary"
                 onClick={confirmInsertTable}
               >
                 Вставить

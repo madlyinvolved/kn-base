@@ -6,51 +6,6 @@ import { createClient } from '../../../../../lib/supabase/client.js'
 import ArticleEditor from '../../../../../components/admin/ArticleEditor.jsx'
 import { textToTipTapJSON, isValidTipTapDoc } from '../../../../../lib/utils/tiptap.js'
 
-const titleStyle = {
-  fontFamily: 'var(--font-display)',
-  fontSize: '2rem',
-  fontWeight: 700,
-}
-
-const fieldStyle = { marginBottom: '16px' }
-
-const labelStyle = {
-  display: 'block',
-  fontSize: '0.8125rem',
-  fontWeight: 500,
-  marginBottom: '6px',
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  fontSize: '0.9375rem',
-  fontFamily: 'var(--font-body)',
-  border: '1px solid var(--color-border)',
-  borderRadius: '8px',
-  outline: 'none',
-  boxSizing: 'border-box',
-}
-
-const selectStyle = { ...inputStyle, fontSize: '0.875rem' }
-
-const btnBase = {
-  padding: '10px 20px',
-  fontSize: '0.875rem',
-  fontFamily: 'var(--font-body)',
-  fontWeight: 600,
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-}
-
-const btnDisabled = {
-  ...btnBase,
-  background: '#e5e5e5',
-  color: '#9ca3af',
-  cursor: 'not-allowed',
-}
-
 const previewOverlayStyle = {
   position: 'fixed',
   top: 0,
@@ -206,15 +161,21 @@ export default function EditArticlePage() {
   return (
     <div>
       <div className="editor-sticky-actions">
-        <h1 style={{ ...titleStyle, fontSize: '1.5rem', margin: 0, marginRight: 'auto' }}>
+        <button className="editor-btn-ghost" onClick={() => router.push('/admin/articles')}>
+          ← Назад
+        </button>
+
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
           Редактирование
         </h1>
 
-        {isDirty && <span className="editor-unsaved-banner">Есть несохранённые изменения</span>}
+        <div style={{ flex: 1 }} />
+
+        {isDirty && <span className="editor-unsaved-banner">Несохранённые изменения</span>}
         {!isDirty && saveStatus && <span className="editor-save-status">{saveStatus}</span>}
 
         <button
-          style={canSave ? { ...btnBase, background: 'var(--color-accent)', color: 'white' } : btnDisabled}
+          className="editor-btn-primary"
           onClick={() => doSave(isPublished)}
           disabled={!canSave}
           title={!canEdit ? 'У вас нет прав на редактирование' : undefined}
@@ -223,11 +184,7 @@ export default function EditArticlePage() {
         </button>
         {!isPublished && (
           <button
-            style={
-              canEdit && title.trim() && !saving
-                ? { ...btnBase, background: '#059669', color: 'white' }
-                : btnDisabled
-            }
+            className="editor-btn-outline"
             onClick={() => doSave(true)}
             disabled={!canEdit || !title.trim() || saving}
           >
@@ -236,45 +193,37 @@ export default function EditArticlePage() {
         )}
         {isPublished && (
           <button
-            style={
-              canEdit && !saving
-                ? { ...btnBase, background: '#fef3c7', color: '#92400e' }
-                : btnDisabled
-            }
+            className="editor-btn-outline"
             onClick={() => doSave(false)}
             disabled={!canEdit || saving}
           >
             Снять с публикации
           </button>
         )}
-        <button
-          style={{ ...btnBase, background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-          onClick={() => setShowPreview(true)}
-        >
+        <button className="editor-btn-outline" onClick={() => setShowPreview(true)}>
           Предпросмотр
-        </button>
-        <button
-          style={{ ...btnBase, background: 'transparent', color: 'var(--color-text-secondary)' }}
-          onClick={() => router.push('/admin/articles')}
-        >
-          ← Назад
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '16px', marginBottom: '20px' }}>
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Заголовок</label>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '16px', marginBottom: '16px' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
+            Заголовок
+          </label>
           <input
-            style={inputStyle}
+            className="editor-field-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="Введите заголовок статьи"
           />
         </div>
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Категория</label>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
+            Категория
+          </label>
           <select
-            style={selectStyle}
+            className="editor-field-select"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
           >
@@ -287,21 +236,23 @@ export default function EditArticlePage() {
         </div>
       </div>
 
-      <div style={fieldStyle}>
-        <label style={labelStyle}>Краткое описание</label>
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
+          Краткое описание
+        </label>
         <input
-          style={inputStyle}
+          className="editor-field-summary"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
+          placeholder="Краткое описание для поиска и превью"
         />
       </div>
 
       <div style={{ marginBottom: '20px' }}>
-        <label style={labelStyle}>Содержание</label>
         {initialContent !== null ? (
-          <ArticleEditor content={initialContent} onUpdate={setEditorData} />
+          <ArticleEditor content={initialContent} onUpdate={setEditorData} saveStatus={!isDirty ? saveStatus : undefined} />
         ) : (
-          <ArticleEditor content={null} onUpdate={setEditorData} />
+          <ArticleEditor content={null} onUpdate={setEditorData} saveStatus={!isDirty ? saveStatus : undefined} />
         )}
       </div>
 
@@ -310,10 +261,7 @@ export default function EditArticlePage() {
           <div style={previewCardStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem' }}>Предпросмотр</h2>
-              <button
-                style={{ ...btnBase, padding: '6px 12px', fontSize: '0.8125rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-                onClick={() => setShowPreview(false)}
-              >
+              <button className="editor-btn-outline" style={{ padding: '6px 12px', fontSize: '0.8125rem' }} onClick={() => setShowPreview(false)}>
                 Закрыть
               </button>
             </div>
