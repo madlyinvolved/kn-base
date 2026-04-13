@@ -2,14 +2,13 @@
 
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
-const gridStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: '12px',
-  margin: '16px 0',
-}
+const AVATAR_SIZE = 80
+const AVATAR_COLORS = ['#e85d2a', '#3b82f6', '#8b5cf6', '#059669', '#d946ef', '#f59e0b', '#6366f1', '#ec4899']
+
+/* Grid uses CSS class .contact-cards-grid for responsive columns */
 
 const cardStyle = {
   padding: '16px',
@@ -18,24 +17,9 @@ const cardStyle = {
   background: 'var(--color-surface)',
   fontSize: '0.875rem',
   lineHeight: 1.5,
-}
-
-const nameStyle = {
-  fontWeight: 700,
-  fontSize: '0.9375rem',
-  marginBottom: '4px',
-}
-
-const slackStyle = {
-  fontSize: '0.8125rem',
-  color: 'var(--color-accent)',
-  marginBottom: '8px',
-}
-
-const topicsStyle = {
-  fontSize: '0.8125rem',
-  color: 'var(--color-text-secondary)',
-  whiteSpace: 'pre-wrap',
+  display: 'flex',
+  gap: '14px',
+  alignItems: 'flex-start',
 }
 
 const inputStyle = {
@@ -69,13 +53,80 @@ const smallBtnStyle = {
 }
 
 function emptyCard() {
-  return { name: '', slack: '', topics: '' }
+  return { name: '', slack: '', topics: '', photo: null }
+}
+
+function getInitials(name) {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.trim().slice(0, 2).toUpperCase()
+}
+
+function getAvatarColor(name) {
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+function Avatar({ name, photo, size, onClick, uploading }) {
+  const avatarBase = {
+    width: size,
+    height: size,
+    minWidth: size,
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    cursor: onClick ? 'pointer' : 'default',
+    position: 'relative',
+    userSelect: 'none',
+  }
+
+  if (photo) {
+    return (
+      <div style={avatarBase} onClick={onClick} title={onClick ? 'Заменить фото' : undefined}>
+        <img src={photo} alt={name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {uploading && (
+          <div style={{
+            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontSize: '0.75rem',
+          }}>
+            ...
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        ...avatarBase,
+        background: getAvatarColor(name),
+        color: 'white',
+        fontWeight: 700,
+        fontSize: size * 0.35,
+        letterSpacing: '0.5px',
+      }}
+      onClick={onClick}
+      title={onClick ? 'Загрузить фото' : undefined}
+    >
+      {uploading ? '...' : getInitials(name)}
+    </div>
+  )
 }
 
 function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
   const cards = node.attrs.cards || [emptyCard()]
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(cards)
+  const [uploadingIdx, setUploadingIdx] = useState(-1)
+  const fileRefs = useRef({})
 
   function updateCard(idx, field, value) {
     const next = draft.map((c, i) => (i === idx ? { ...c, [field]: value } : c))
@@ -101,6 +152,28 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
     setEditing(false)
   }
 
+  async function handleAvatarUpload(idx, e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingIdx(idx)
+    const url = await uploadImageToStorage(file)
+    setUploadingIdx(-1)
+    if (url) {
+      updateCard(idx, 'photo', url)
+    }
+  }
+
+  function triggerFileInput(idx) {
+    if (!fileRefs.current[idx]) {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      fileRefs.current[idx] = input
+    }
+    fileRefs.current[idx].onchange = (e) => handleAvatarUpload(idx, e)
+    fileRefs.current[idx].click()
+  }
+
   if (editing) {
     return (
       <NodeViewWrapper data-contact-cards>
@@ -118,7 +191,7 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
             Редактирование контактов
           </div>
 
-          <div style={gridStyle}>
+          <div className="contact-cards-grid">
             {draft.map((card, idx) => (
               <div
                 key={idx}
@@ -149,21 +222,34 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
                     ✕
                   </button>
                 )}
-                <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
-                  Контакт {idx + 1}
+
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+                  <Avatar
+                    name={card.name}
+                    photo={card.photo}
+                    size={AVATAR_SIZE}
+                    onClick={() => triggerFileInput(idx)}
+                    uploading={uploadingIdx === idx}
+                  />
+                  <div style={{ flex: 1, paddingTop: '2px' }}>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+                      Контакт {idx + 1}
+                    </div>
+                    <input
+                      style={inputStyle}
+                      placeholder="Имя"
+                      value={card.name}
+                      onChange={(e) => updateCard(idx, 'name', e.target.value)}
+                    />
+                    <input
+                      style={inputStyle}
+                      placeholder="Slack (@anna.leonova)"
+                      value={card.slack}
+                      onChange={(e) => updateCard(idx, 'slack', e.target.value)}
+                    />
+                  </div>
                 </div>
-                <input
-                  style={inputStyle}
-                  placeholder="Имя"
-                  value={card.name}
-                  onChange={(e) => updateCard(idx, 'name', e.target.value)}
-                />
-                <input
-                  style={inputStyle}
-                  placeholder="Slack (@anna.leonova)"
-                  value={card.slack}
-                  onChange={(e) => updateCard(idx, 'slack', e.target.value)}
-                />
+
                 <textarea
                   style={textareaStyle}
                   placeholder="По каким вопросам обращаться"
@@ -231,12 +317,15 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
             Нажмите чтобы добавить контакты
           </div>
         ) : (
-          <div style={gridStyle}>
+          <div className="contact-cards-grid">
             {cards.map((card, idx) => (
               <div key={idx} style={cardStyle}>
-                {card.name && <div style={nameStyle}>{card.name}</div>}
-                {card.slack && <div style={slackStyle}>{card.slack}</div>}
-                {card.topics && <div style={topicsStyle}>{card.topics}</div>}
+                <Avatar name={card.name} photo={card.photo} size={AVATAR_SIZE} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {card.name && <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '2px' }}>{card.name}</div>}
+                  {card.slack && <div style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', marginBottom: '6px' }}>{card.slack}</div>}
+                  {card.topics && <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{card.topics}</div>}
+                </div>
               </div>
             ))}
           </div>

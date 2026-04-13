@@ -592,3 +592,17 @@ input:focus:not(:focus-visible) {
   display: table;
   clear: both;
 }
+
+/* === Contact cards grid === */
+.contact-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+@media (max-width: 768px) {
+  .contact-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

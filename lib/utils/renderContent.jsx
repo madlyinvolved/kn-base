@@ -196,20 +196,29 @@ function renderTextNode(node, key) {
   return <span key={key}>{el}</span>
 }
 
+const AVATAR_COLORS = ['#e85d2a', '#3b82f6', '#8b5cf6', '#059669', '#d946ef', '#f59e0b', '#6366f1', '#ec4899']
+
+function contactInitials(name) {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.trim().slice(0, 2).toUpperCase()
+}
+
+function contactColor(name) {
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
 function renderContactCards(node, key) {
   const cards = node.attrs?.cards || []
   if (!cards.length) return null
 
   return (
-    <div
-      key={key}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '12px',
-        margin: '16px 0',
-      }}
-    >
+    <div key={key} className="contact-cards-grid">
       {cards.map((card, idx) => (
         <div
           key={idx}
@@ -220,23 +229,59 @@ function renderContactCards(node, key) {
             background: 'var(--color-surface)',
             fontSize: '0.875rem',
             lineHeight: 1.5,
+            display: 'flex',
+            gap: '14px',
+            alignItems: 'flex-start',
           }}
         >
-          {card.name && (
-            <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '4px' }}>
-              {card.name}
+          {card.photo ? (
+            <img
+              src={card.photo}
+              alt={card.name || ''}
+              style={{
+                width: 64,
+                height: 64,
+                minWidth: 64,
+                borderRadius: '50%',
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                minWidth: 64,
+                borderRadius: '50%',
+                background: contactColor(card.name),
+                color: 'white',
+                fontWeight: 700,
+                fontSize: 22,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {contactInitials(card.name)}
             </div>
           )}
-          {card.slack && (
-            <div style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', marginBottom: '8px' }}>
-              {card.slack}
-            </div>
-          )}
-          {card.topics && (
-            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>
-              {card.topics}
-            </div>
-          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {card.name && (
+              <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '2px' }}>
+                {card.name}
+              </div>
+            )}
+            {card.slack && (
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', marginBottom: '6px' }}>
+                {card.slack}
+              </div>
+            )}
+            {card.topics && (
+              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                {card.topics}
+              </div>
+            )}
+          </div>
         </div>
       ))}
     </div>
