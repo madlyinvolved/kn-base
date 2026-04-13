@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '../../lib/supabase/client.js'
+import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
 const toolbarStyle = {
   display: 'flex',
@@ -53,6 +53,7 @@ export default function EditorToolbar({ editor }) {
   const [showTableDialog, setShowTableDialog] = useState(false)
   const [tableRows, setTableRows] = useState(3)
   const [tableCols, setTableCols] = useState(3)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   if (!editor) return null
 
@@ -76,39 +77,20 @@ export default function EditorToolbar({ editor }) {
     input.onchange = async (e) => {
       const file = e.target.files?.[0]
       if (!file) return
-
-      const supabase = createClient()
-      const fileName = `${Date.now()}-${file.name}`
-      const filePath = `articles/${fileName}`
-
-      const { error } = await supabase.storage
-        .from('media')
-        .upload(filePath, file)
-
-      if (error) {
-        // Fallback: read as base64
-        const reader = new FileReader()
-        reader.onload = () => {
-          editor.chain().focus().setImage({ src: reader.result }).run()
-        }
-        reader.readAsDataURL(file)
-        return
+      setUploadingImage(true)
+      const url = await uploadImageToStorage(file)
+      setUploadingImage(false)
+      if (url) {
+        editor
+          .chain()
+          .focus()
+          .setImage({ src: url, align: 'center', width: 100 })
+          .run()
+      } else {
+        alert('Не удалось загрузить изображение. Проверьте подключение или размер файла.')
       }
-
-      const { data: urlData } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath)
-
-      editor.chain().focus().setImage({ src: urlData.publicUrl }).run()
     }
     input.click()
-  }
-
-  function handleInsertImageUrl() {
-    const url = prompt('URL изображения:')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
-    }
   }
 
   function handleSetLink() {
@@ -175,8 +157,15 @@ export default function EditorToolbar({ editor }) {
 
         <span style={separatorStyle} />
 
-        {btn('🖼️', handleInsertImage, false)}
-        {btn('🌐', handleInsertImageUrl, false)}
+        <button
+          type="button"
+          style={btnBase}
+          onClick={handleInsertImage}
+          disabled={uploadingImage}
+          title="Загрузить фото"
+        >
+          {uploadingImage ? '…' : '↑ Фото'}
+        </button>
         {btn('▶️', handleInsertVideo, false)}
         {btn('📊', handleInsertTable, false)}
       </div>

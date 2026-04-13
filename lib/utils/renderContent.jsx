@@ -119,29 +119,34 @@ function renderNode(node, key) {
 
 function renderImage(node, key) {
   const attrs = node.attrs || {}
-  const style = {}
-  if (attrs.width) style.width = `${attrs.width}%`
-  const align = attrs.align
-  if (align === 'center') {
-    style.display = 'block'
-    style.marginLeft = 'auto'
-    style.marginRight = 'auto'
-  } else if (align === 'left') {
-    style.display = 'block'
-    style.marginRight = 'auto'
-    style.marginLeft = 0
-  } else if (align === 'right') {
-    style.display = 'block'
-    style.marginLeft = 'auto'
-    style.marginRight = 0
+  const align = attrs.align || 'center'
+  const width = attrs.width || 100
+  const wrap = attrs.wrap === true
+
+  const figureStyle = {
+    margin: '1em 0',
+    textAlign: align === 'center' ? 'center' : align === 'right' ? 'right' : 'left',
   }
 
-  const img = <img src={attrs.src} alt={attrs.alt || ''} style={style} />
+  if (wrap) {
+    figureStyle.float = align === 'right' ? 'right' : 'left'
+    figureStyle.maxWidth = '50%'
+    figureStyle.marginLeft = align === 'right' ? '16px' : 0
+    figureStyle.marginRight = align === 'left' ? '16px' : 0
+  }
 
-  if (attrs.caption) {
-    return (
-      <figure key={key} style={{ margin: '1em 0' }}>
-        {img}
+  const imgStyle = {
+    width: `${width}%`,
+    maxWidth: '100%',
+    height: 'auto',
+    borderRadius: '8px',
+    display: 'inline-block',
+  }
+
+  return (
+    <figure key={key} style={figureStyle}>
+      <img src={attrs.src} alt={attrs.alt || attrs.caption || ''} style={imgStyle} />
+      {attrs.caption && (
         <figcaption
           style={{
             fontSize: '0.8125rem',
@@ -153,11 +158,9 @@ function renderImage(node, key) {
         >
           {attrs.caption}
         </figcaption>
-      </figure>
-    )
-  }
-
-  return <span key={key}>{img}</span>
+      )}
+    </figure>
+  )
 }
 
 function renderTextNode(node, key) {

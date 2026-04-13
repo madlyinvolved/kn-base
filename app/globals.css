@@ -438,3 +438,22 @@ input:focus:not(:focus-visible) {
   border-radius: 8px;
   outline: none;
 }
+
+/* === Image node: caption placeholder === */
+.tiptap-editor figure[data-image-node] figcaption:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tiptap-editor figure[data-image-node] {
+  clear: both;
+}
+
+/* Float clearfix after wrapped images */
+.tiptap-editor .tiptap::after {
+  content: '';
+  display: table;
+  clear: both;
+}
