@@ -216,9 +216,8 @@ function renderContactCards(node, key) {
           style={{
             padding: '16px',
             borderRadius: '12px',
-            border: idx === 0 ? '1px solid var(--color-accent)' : '1px solid var(--color-border)',
-            background: idx === 0 ? '#fef6f3' : 'var(--color-surface)',
-            boxShadow: idx === 0 ? '0 0 0 1px var(--color-accent)' : 'none',
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface)',
             fontSize: '0.875rem',
             lineHeight: 1.5,
           }}
@@ -228,25 +227,14 @@ function renderContactCards(node, key) {
               {card.name}
             </div>
           )}
-          {card.role && (
-            <div
-              style={{
-                fontSize: '0.8125rem',
-                color: 'var(--color-text-secondary)',
-                marginBottom: '8px',
-              }}
-            >
-              {card.role}
+          {card.slack && (
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', marginBottom: '8px' }}>
+              {card.slack}
             </div>
           )}
-          {card.phone && (
-            <div style={{ fontSize: '0.8125rem', marginBottom: '2px' }}>
-              📞 {card.phone}
-            </div>
-          )}
-          {card.email && (
-            <div style={{ fontSize: '0.8125rem', wordBreak: 'break-all' }}>
-              ✉️ {card.email}
+          {card.topics && (
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>
+              {card.topics}
             </div>
           )}
         </div>

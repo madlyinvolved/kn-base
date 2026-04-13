@@ -11,7 +11,7 @@ const gridStyle = {
   margin: '16px 0',
 }
 
-const cardBase = {
+const cardStyle = {
   padding: '16px',
   borderRadius: '12px',
   border: '1px solid var(--color-border)',
@@ -20,30 +20,22 @@ const cardBase = {
   lineHeight: 1.5,
 }
 
-const cardHighlight = {
-  ...cardBase,
-  borderColor: 'var(--color-accent)',
-  background: '#fef6f3',
-  boxShadow: '0 0 0 1px var(--color-accent)',
-}
-
 const nameStyle = {
   fontWeight: 700,
   fontSize: '0.9375rem',
   marginBottom: '4px',
 }
 
-const roleStyle = {
+const slackStyle = {
   fontSize: '0.8125rem',
-  color: 'var(--color-text-secondary)',
+  color: 'var(--color-accent)',
   marginBottom: '8px',
 }
 
-const fieldRow = {
+const topicsStyle = {
   fontSize: '0.8125rem',
-  color: 'var(--color-text)',
-  marginBottom: '2px',
-  wordBreak: 'break-all',
+  color: 'var(--color-text-secondary)',
+  whiteSpace: 'pre-wrap',
 }
 
 const inputStyle = {
@@ -58,6 +50,13 @@ const inputStyle = {
   boxSizing: 'border-box',
 }
 
+const textareaStyle = {
+  ...inputStyle,
+  resize: 'vertical',
+  minHeight: '48px',
+  lineHeight: 1.4,
+}
+
 const smallBtnStyle = {
   padding: '4px 10px',
   fontSize: '0.75rem',
@@ -70,11 +69,11 @@ const smallBtnStyle = {
 }
 
 function emptyCard() {
-  return { name: '', role: '', phone: '', email: '' }
+  return { name: '', slack: '', topics: '' }
 }
 
 function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
-  const cards = node.attrs.cards || [emptyCard(), emptyCard(), emptyCard()]
+  const cards = node.attrs.cards || [emptyCard()]
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(cards)
 
@@ -119,61 +118,66 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
             Редактирование контактов
           </div>
 
-          {draft.map((card, idx) => (
-            <div
-              key={idx}
-              style={{
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '8px',
-                background: idx === 0 ? '#fef6f3' : 'var(--color-bg)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                  {idx === 0 ? '★ Основной контакт' : `Контакт ${idx + 1}`}
-                </span>
+          <div style={gridStyle}>
+            {draft.map((card, idx) => (
+              <div
+                key={idx}
+                style={{
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  background: 'var(--color-bg)',
+                  position: 'relative',
+                }}
+              >
                 {draft.length > 1 && (
                   <button
                     type="button"
-                    style={{ ...smallBtnStyle, color: '#dc2626', borderColor: '#fca5a5' }}
+                    style={{
+                      ...smallBtnStyle,
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      color: '#dc2626',
+                      borderColor: '#fca5a5',
+                      padding: '2px 7px',
+                      fontSize: '0.6875rem',
+                    }}
                     onClick={() => removeCard(idx)}
+                    title="Удалить контакт"
                   >
                     ✕
                   </button>
                 )}
+                <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                  Контакт {idx + 1}
+                </div>
+                <input
+                  style={inputStyle}
+                  placeholder="Имя"
+                  value={card.name}
+                  onChange={(e) => updateCard(idx, 'name', e.target.value)}
+                />
+                <input
+                  style={inputStyle}
+                  placeholder="Slack (@anna.leonova)"
+                  value={card.slack}
+                  onChange={(e) => updateCard(idx, 'slack', e.target.value)}
+                />
+                <textarea
+                  style={textareaStyle}
+                  placeholder="По каким вопросам обращаться"
+                  value={card.topics}
+                  onChange={(e) => updateCard(idx, 'topics', e.target.value)}
+                  rows={2}
+                />
               </div>
-              <input
-                style={inputStyle}
-                placeholder="Имя"
-                value={card.name}
-                onChange={(e) => updateCard(idx, 'name', e.target.value)}
-              />
-              <input
-                style={inputStyle}
-                placeholder="Должность"
-                value={card.role}
-                onChange={(e) => updateCard(idx, 'role', e.target.value)}
-              />
-              <input
-                style={inputStyle}
-                placeholder="Телефон"
-                value={card.phone}
-                onChange={(e) => updateCard(idx, 'phone', e.target.value)}
-              />
-              <input
-                style={inputStyle}
-                placeholder="Email"
-                value={card.email}
-                onChange={(e) => updateCard(idx, 'email', e.target.value)}
-              />
-            </div>
-          ))}
+            ))}
+          </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
             <button type="button" style={smallBtnStyle} onClick={addCard}>
-              + Добавить
+              + Добавить контакт
             </button>
             <div style={{ flex: 1 }} />
             <button type="button" style={smallBtnStyle} onClick={cancel}>
@@ -197,7 +201,7 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
     )
   }
 
-  const hasContent = cards.some((c) => c.name || c.role || c.phone || c.email)
+  const hasContent = cards.some((c) => c.name || c.slack || c.topics)
 
   return (
     <NodeViewWrapper data-contact-cards>
@@ -224,16 +228,15 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
               fontSize: '0.875rem',
             }}
           >
-            👥 Нажмите чтобы добавить контакты
+            Нажмите чтобы добавить контакты
           </div>
         ) : (
           <div style={gridStyle}>
             {cards.map((card, idx) => (
-              <div key={idx} style={idx === 0 ? cardHighlight : cardBase}>
+              <div key={idx} style={cardStyle}>
                 {card.name && <div style={nameStyle}>{card.name}</div>}
-                {card.role && <div style={roleStyle}>{card.role}</div>}
-                {card.phone && <div style={fieldRow}>📞 {card.phone}</div>}
-                {card.email && <div style={fieldRow}>✉️ {card.email}</div>}
+                {card.slack && <div style={slackStyle}>{card.slack}</div>}
+                {card.topics && <div style={topicsStyle}>{card.topics}</div>}
               </div>
             ))}
           </div>
@@ -242,14 +245,14 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
         {selected && (
           <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
             <button type="button" style={smallBtnStyle} onClick={() => setEditing(true)}>
-              ✏️ Редактировать
+              Редактировать
             </button>
             <button
               type="button"
               style={{ ...smallBtnStyle, color: '#dc2626' }}
               onClick={() => deleteNode()}
             >
-              Удалить
+              Удалить блок
             </button>
           </div>
         )}

@@ -178,13 +178,13 @@ export default function EditorToolbar({ editor }) {
         >
           {uploadingImage ? '…' : '↑Фото'}
         </button>
-        {btn('🎬', handleInsertVideo, false, 'Видео')}
+        {btn('Видео', handleInsertVideo, false, 'Вставить видео')}
 
         {sep}
 
         {/* Group 5: Table, contacts */}
-        {btn('📊', () => setShowTableDialog(true), false, 'Таблица')}
-        {btn('👥', () => editor.chain().focus().insertContent({ type: 'contactCards' }).run(), false, 'Карточка контактов')}
+        {btn('Таблица', () => setShowTableDialog(true), false, 'Вставить таблицу')}
+        {btn('Контакты', () => editor.chain().focus().insertContent({ type: 'contactCards' }).run(), false, 'Карточка контактов')}
       </div>
 
       {showLinkInput && (
