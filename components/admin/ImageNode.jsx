@@ -154,7 +154,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
               border: '1px solid #555',
               borderRadius: '4px',
               color: 'white',
-              textAlign: 'center',
+              textAlign: align || 'center',
               outline: 'none',
             }}
             title="Произвольная ширина %"
@@ -191,7 +191,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
           fontSize: '0.8125rem',
           color: 'var(--color-text-secondary)',
           fontStyle: 'italic',
-          textAlign: 'center',
+          textAlign: align || 'center',
           marginTop: '6px',
           outline: 'none',
           minHeight: '1.2em',

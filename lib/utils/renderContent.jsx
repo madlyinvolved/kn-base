@@ -154,7 +154,7 @@ function renderImage(node, key) {
             fontSize: '0.8125rem',
             color: 'var(--color-text-secondary)',
             fontStyle: 'italic',
-            textAlign: 'center',
+            textAlign: align,
             marginTop: '6px',
           }}
         >
