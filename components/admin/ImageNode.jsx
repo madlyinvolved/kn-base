@@ -5,13 +5,12 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useRef, useState } from 'react'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
-/**
- * ImageNodeView — floating dark toolbar + inline-editable caption.
- * Shown whenever the image node is selected in the editor.
- */
+const SIZE_PRESETS = [25, 50, 75, 100]
+
 function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor }) {
   const { src, alt, width, align, caption, wrap } = node.attrs
   const [replacing, setReplacing] = useState(false)
+  const [customWidth, setCustomWidth] = useState(String(width || 100))
   const replaceRef = useRef(null)
 
   const figureAlign = {
@@ -33,6 +32,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     display: 'inline-block',
     outline: selected ? '2px solid var(--color-accent)' : 'none',
     outlineOffset: '2px',
+    cursor: 'default',
   }
 
   async function handleReplace(e) {
@@ -46,6 +46,20 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     }
   }
 
+  function setWidth(w) {
+    const clamped = Math.max(10, Math.min(100, Number(w) || 100))
+    updateAttributes({ width: clamped })
+    setCustomWidth(String(clamped))
+  }
+
+  function handleCustomWidthChange(e) {
+    setCustomWidth(e.target.value)
+  }
+
+  function handleCustomWidthCommit() {
+    setWidth(customWidth)
+  }
+
   const toolbarStyle = {
     position: 'absolute',
     top: '-44px',
@@ -53,38 +67,39 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     transform: 'translateX(-50%)',
     display: selected ? 'inline-flex' : 'none',
     alignItems: 'center',
-    gap: '4px',
-    padding: '6px 8px',
+    gap: '3px',
+    padding: '5px 8px',
     background: '#1a1a1a',
     color: 'white',
     borderRadius: '8px',
     boxShadow: 'var(--shadow-md)',
     whiteSpace: 'nowrap',
     zIndex: 30,
-    fontSize: '0.75rem',
+    fontSize: '0.6875rem',
   }
 
-  const iconBtn = {
+  const btn = {
     background: 'transparent',
     border: 'none',
     color: 'white',
     cursor: 'pointer',
-    padding: '4px 8px',
+    padding: '3px 7px',
     borderRadius: '4px',
-    fontSize: '0.8125rem',
+    fontSize: '0.6875rem',
     lineHeight: 1,
   }
 
-  const activeIconBtn = {
-    ...iconBtn,
+  const btnActive = {
+    ...btn,
     background: 'var(--color-accent)',
   }
 
   const sep = {
     width: '1px',
-    height: '18px',
+    height: '16px',
     background: '#444',
     margin: '0 2px',
+    flexShrink: 0,
   }
 
   function updateCaption(e) {
@@ -93,88 +108,75 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
   }
 
   return (
-    <NodeViewWrapper as="figure" style={figureAlign} data-image-node>
+    <NodeViewWrapper as="figure" style={figureAlign} data-image-node draggable={false}>
       <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
-        <img src={src} alt={alt || caption || ''} style={imgStyle} />
+        <img src={src} alt={alt || caption || ''} style={imgStyle} draggable={false} />
 
         <div style={toolbarStyle} contentEditable={false}>
-          <button
-            type="button"
-            style={align === 'left' ? activeIconBtn : iconBtn}
-            onClick={() => updateAttributes({ align: 'left' })}
-            title="По левому краю"
-          >
+          {/* Alignment */}
+          <button type="button" style={align === 'left' ? btnActive : btn} onClick={() => updateAttributes({ align: 'left' })} title="По левому краю">
             ⇤
           </button>
-          <button
-            type="button"
-            style={align === 'center' ? activeIconBtn : iconBtn}
-            onClick={() => updateAttributes({ align: 'center' })}
-            title="По центру"
-          >
+          <button type="button" style={align === 'center' ? btnActive : btn} onClick={() => updateAttributes({ align: 'center' })} title="По центру">
             ⇔
           </button>
-          <button
-            type="button"
-            style={align === 'right' ? activeIconBtn : iconBtn}
-            onClick={() => updateAttributes({ align: 'right' })}
-            title="По правому краю"
-          >
+          <button type="button" style={align === 'right' ? btnActive : btn} onClick={() => updateAttributes({ align: 'right' })} title="По правому краю">
             ⇥
           </button>
 
           <span style={sep} />
 
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0 6px' }}>
-            <input
-              type="range"
-              min="20"
-              max="100"
-              step="5"
-              value={width || 100}
-              onChange={(e) => updateAttributes({ width: Number(e.target.value) })}
-              style={{ width: '80px', accentColor: 'var(--color-accent)' }}
-              title="Ширина"
-            />
-            <span style={{ minWidth: '32px', textAlign: 'right' }}>{width || 100}%</span>
-          </label>
+          {/* Size presets */}
+          {SIZE_PRESETS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              style={(width || 100) === s ? btnActive : btn}
+              onClick={() => setWidth(s)}
+              title={`${s}%`}
+            >
+              {s}%
+            </button>
+          ))}
+          <input
+            type="number"
+            min="10"
+            max="100"
+            value={customWidth}
+            onChange={handleCustomWidthChange}
+            onBlur={handleCustomWidthCommit}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleCustomWidthCommit() }}
+            style={{
+              width: '38px',
+              padding: '2px 4px',
+              fontSize: '0.6875rem',
+              background: '#333',
+              border: '1px solid #555',
+              borderRadius: '4px',
+              color: 'white',
+              textAlign: 'center',
+              outline: 'none',
+            }}
+            title="Произвольная ширина %"
+          />
 
           <span style={sep} />
 
-          <button
-            type="button"
-            style={wrap ? activeIconBtn : iconBtn}
-            onClick={() => updateAttributes({ wrap: !wrap })}
-            title="Обтекание текстом"
-          >
+          {/* Wrap */}
+          <button type="button" style={wrap ? btnActive : btn} onClick={() => updateAttributes({ wrap: !wrap })} title="Обтекание текстом">
             ⇄
           </button>
 
           <span style={sep} />
 
-          <button
-            type="button"
-            style={iconBtn}
-            onClick={() => replaceRef.current?.click()}
-            title="Заменить"
-            disabled={replacing}
-          >
+          {/* Replace */}
+          <button type="button" style={btn} onClick={() => replaceRef.current?.click()} title="Заменить" disabled={replacing}>
             {replacing ? '…' : '↻'}
           </button>
-          <input
-            ref={replaceRef}
-            type="file"
-            accept="image/*"
-            onChange={handleReplace}
-            style={{ display: 'none' }}
-          />
+          <input ref={replaceRef} type="file" accept="image/*" onChange={handleReplace} style={{ display: 'none' }} />
 
-          <button
-            type="button"
-            style={iconBtn}
-            onClick={() => deleteNode()}
-            title="Удалить"
-          >
+          {/* Delete */}
+          <button type="button" style={btn} onClick={() => deleteNode()} title="Удалить">
             ✕
           </button>
         </div>
@@ -204,7 +206,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
 
 export const CustomImage = TiptapImage.extend({
   name: 'image',
-  draggable: true,
+  draggable: false,
   selectable: true,
 
   addAttributes() {
