@@ -110,6 +110,8 @@ function renderNode(node, key) {
       return <td key={key}>{children}</td>
     case 'tableHeader':
       return <th key={key}>{children}</th>
+    case 'contactCards':
+      return renderContactCards(node, key)
     case 'text':
       return renderTextNode(node, key)
     default:
@@ -192,4 +194,63 @@ function renderTextNode(node, key) {
   }
 
   return <span key={key}>{el}</span>
+}
+
+function renderContactCards(node, key) {
+  const cards = node.attrs?.cards || []
+  if (!cards.length) return null
+
+  return (
+    <div
+      key={key}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '12px',
+        margin: '16px 0',
+      }}
+    >
+      {cards.map((card, idx) => (
+        <div
+          key={idx}
+          style={{
+            padding: '16px',
+            borderRadius: '12px',
+            border: idx === 0 ? '1px solid var(--color-accent)' : '1px solid var(--color-border)',
+            background: idx === 0 ? '#fef6f3' : 'var(--color-surface)',
+            boxShadow: idx === 0 ? '0 0 0 1px var(--color-accent)' : 'none',
+            fontSize: '0.875rem',
+            lineHeight: 1.5,
+          }}
+        >
+          {card.name && (
+            <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '4px' }}>
+              {card.name}
+            </div>
+          )}
+          {card.role && (
+            <div
+              style={{
+                fontSize: '0.8125rem',
+                color: 'var(--color-text-secondary)',
+                marginBottom: '8px',
+              }}
+            >
+              {card.role}
+            </div>
+          )}
+          {card.phone && (
+            <div style={{ fontSize: '0.8125rem', marginBottom: '2px' }}>
+              📞 {card.phone}
+            </div>
+          )}
+          {card.email && (
+            <div style={{ fontSize: '0.8125rem', wordBreak: 'break-all' }}>
+              ✉️ {card.email}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }

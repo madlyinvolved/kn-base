@@ -168,6 +168,7 @@ export default function EditorToolbar({ editor }) {
         </button>
         {btn('▶️', handleInsertVideo, false)}
         {btn('📊', handleInsertTable, false)}
+        {btn('👥', () => editor.chain().focus().insertContent({ type: 'contactCards' }).run(), false)}
       </div>
 
       {showLinkInput && (
