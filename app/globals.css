@@ -698,3 +698,33 @@ input:focus:not(:focus-visible) {
   text-align: right;
   color: var(--color-text);
 }
+
+.article-section-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  transition:
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.article-section-nav:hover {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-text-secondary);
+}
+
+.article-section-nav__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}

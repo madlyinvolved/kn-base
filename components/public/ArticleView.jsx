@@ -4,7 +4,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { renderContent, renderTipTapContent } from '../../lib/utils/renderContent.jsx'
 
-export default function ArticleView({ article, category, nextArticle, categoryArticleCount }) {
+export default function ArticleView({
+  article,
+  category,
+  nextArticle,
+  nextCategory,
+  isLastInCategory,
+  categoryArticleCount,
+}) {
   const router = useRouter()
 
   const handleArticleClick = (id) => {
@@ -17,6 +24,7 @@ export default function ArticleView({ article, category, nextArticle, categoryAr
   const navLeftLabel = nextArticle ? 'Следующая статья →' : '← Вернуться к разделу'
   const navRightLabel = nextArticle ? nextArticle.title : category.name
   const showAllLink = categoryArticleCount > 2
+  const showSectionNav = isLastInCategory
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
@@ -79,6 +87,23 @@ export default function ArticleView({ article, category, nextArticle, categoryAr
           <span className="article-nav-card__label">{navLeftLabel}</span>
           <span className="article-nav-card__title">{navRightLabel}</span>
         </Link>
+
+        {showSectionNav && (
+          <Link
+            href={nextCategory ? `/category/${nextCategory.id}` : '/'}
+            className="article-section-nav"
+            style={{ marginTop: '12px' }}
+          >
+            {nextCategory ? (
+              <>
+                <span>Перейти к разделу «{nextCategory.name}»</span>
+                <span className="article-section-nav__icon">{nextCategory.icon}</span>
+              </>
+            ) : (
+              <span>← На главную</span>
+            )}
+          </Link>
+        )}
 
         {showAllLink && (
           <Link
