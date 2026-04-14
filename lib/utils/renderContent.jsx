@@ -71,8 +71,18 @@ function renderNode(node, key) {
   const children = node.content ? renderNodes(node.content, key) : null
 
   switch (node.type) {
-    case 'paragraph':
+    case 'paragraph': {
+      const hasContent =
+        Array.isArray(children) && children.some((c) => c != null && c !== false)
+      if (!hasContent) {
+        return (
+          <p key={key}>
+            <br />
+          </p>
+        )
+      }
       return <p key={key}>{children}</p>
+    }
     case 'heading': {
       const level = node.attrs?.level || 2
       if (level === 3) return <h3 key={key}>{children}</h3>

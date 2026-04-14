@@ -225,14 +225,20 @@ input:focus:not(:focus-visible) {
 }
 
 .tiptap-editor .tiptap p {
-  margin-bottom: 0.3em;
+  margin-bottom: 0.5em;
+}
+
+/* Empty paragraphs (just Enter presses) preserve visible height */
+.tiptap-editor .tiptap p:empty::before {
+  content: '\00a0';
 }
 
 /* Bold-only paragraphs acting as section headers (e.g. "🌴 Отпуск") */
-.tiptap-editor .tiptap p > strong:only-child {
-  display: block;
-  font-size: 1.05em;
+.tiptap-editor .tiptap p:has(> strong:only-child) {
   margin-top: 1em;
+}
+.tiptap-editor .tiptap p > strong:only-child {
+  font-size: 1.05em;
 }
 
 /* Paragraph right before a list — tight gap */
