@@ -228,6 +228,13 @@ input:focus:not(:focus-visible) {
   margin-bottom: 0.3em;
 }
 
+/* Bold-only paragraphs acting as section headers (e.g. "🌴 Отпуск") */
+.tiptap-editor .tiptap p > strong:only-child {
+  display: block;
+  font-size: 1.05em;
+  margin-top: 1em;
+}
+
 /* Paragraph right before a list — tight gap */
 .tiptap-editor .tiptap p + ul,
 .tiptap-editor .tiptap p + ol {
@@ -238,14 +245,14 @@ input:focus:not(:focus-visible) {
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 600;
-  margin: 1.2em 0 0.3em;
+  margin: 1.5em 0 0.3em;
 }
 
 .tiptap-editor .tiptap h3 {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 1em 0 0.25em;
+  margin: 1.2em 0 0.25em;
 }
 
 /* Heading followed by list — tight */
@@ -261,6 +268,18 @@ input:focus:not(:focus-visible) {
   padding-left: 1.2em;
   margin-top: 0.4em;
   margin-bottom: 0.6em;
+}
+
+.tiptap-editor .tiptap ul {
+  list-style: none;
+}
+
+.tiptap-editor .tiptap ul > li::before {
+  content: '–';
+  color: var(--color-text-secondary);
+  display: inline-block;
+  width: 1em;
+  margin-left: -1.2em;
 }
 
 .tiptap-editor .tiptap li {

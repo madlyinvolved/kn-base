@@ -33,13 +33,13 @@ export default function ArticleView({ article, category, relatedArticles }) {
       <span
         style={{
           display: 'inline-block',
-          padding: '4px 12px',
+          padding: '3px 10px',
           borderRadius: '20px',
           fontSize: '0.75rem',
           fontWeight: 600,
           color: 'white',
           background: category.color,
-          marginBottom: '12px',
+          marginBottom: '8px',
         }}
       >
         {category.icon} {category.name}
@@ -48,8 +48,11 @@ export default function ArticleView({ article, category, relatedArticles }) {
       <h1
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: '2rem',
-          marginBottom: '20px',
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          marginBottom: '0',
+          paddingBottom: '0.8em',
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
         {article.title}
@@ -62,6 +65,7 @@ export default function ArticleView({ article, category, relatedArticles }) {
             lineHeight: 1.35,
             fontSize: '1rem',
             color: 'var(--color-text)',
+            marginTop: '1.2em',
           }}
         >
           <div className="tiptap">{renderTipTapContent(article.contentJson)}</div>
@@ -73,6 +77,7 @@ export default function ArticleView({ article, category, relatedArticles }) {
             lineHeight: 1.35,
             fontSize: '1rem',
             color: 'var(--color-text)',
+            marginTop: '1.2em',
           }}
         >
           {renderContent(article.content, handleArticleClick)}
