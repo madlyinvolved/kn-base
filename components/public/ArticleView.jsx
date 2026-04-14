@@ -4,29 +4,19 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { renderContent, renderTipTapContent } from '../../lib/utils/renderContent.jsx'
 
-const relatedSectionStyle = {
-  marginTop: '48px',
-  padding: '24px',
-  background: 'var(--color-surface)',
-  borderRadius: '12px',
-  border: '1px solid var(--color-border)',
-}
-
-const relatedLinkStyle = {
-  display: 'block',
-  padding: '8px 0',
-  color: 'var(--color-accent)',
-  textDecoration: 'none',
-  fontSize: '0.9375rem',
-  transition: 'opacity var(--transition-fast)',
-}
-
-export default function ArticleView({ article, category, relatedArticles }) {
+export default function ArticleView({ article, category, nextArticle, categoryArticleCount }) {
   const router = useRouter()
 
   const handleArticleClick = (id) => {
     router.push(`/article/${id}`)
   }
+
+  const navHref = nextArticle
+    ? `/article/${nextArticle.id}`
+    : `/category/${category.id}`
+  const navLeftLabel = nextArticle ? 'Следующая статья →' : '← Вернуться к разделу'
+  const navRightLabel = nextArticle ? nextArticle.title : category.name
+  const showAllLink = categoryArticleCount > 2
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
@@ -84,26 +74,28 @@ export default function ArticleView({ article, category, relatedArticles }) {
         </div>
       )}
 
-      {relatedArticles.length > 0 && (
-        <div style={relatedSectionStyle}>
-          <h3
+      <div style={{ marginTop: '48px' }}>
+        <Link href={navHref} className="article-nav-card">
+          <span className="article-nav-card__label">{navLeftLabel}</span>
+          <span className="article-nav-card__title">{navRightLabel}</span>
+        </Link>
+
+        {showAllLink && (
+          <Link
+            href={`/category/${category.id}`}
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.125rem',
-              marginBottom: '12px',
+              display: 'inline-block',
+              marginTop: '12px',
+              fontSize: '0.8125rem',
+              color: 'var(--color-text-secondary)',
+              textDecoration: 'none',
+              borderBottom: '1px dotted var(--color-text-secondary)',
             }}
           >
-            Ещё в этом разделе
-          </h3>
-          <div style={{ display: 'grid', gap: '4px' }}>
-            {relatedArticles.map((a) => (
-              <Link key={a.id} href={`/article/${a.id}`} style={relatedLinkStyle}>
-                → {a.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+            Все статьи раздела «{category.name}»
+          </Link>
+        )}
+      </div>
     </div>
   )
 }

@@ -29,7 +29,12 @@ export default async function ArticlePage({ params }) {
   if (!category) notFound()
 
   const allInCategory = await getArticlesByCategory(article.category)
-  const relatedArticles = allInCategory.filter((a) => a.id !== article.id)
+  const currentIndex = allInCategory.findIndex((a) => a.id === article.id)
+  const nextArticle =
+    currentIndex >= 0 && currentIndex < allInCategory.length - 1
+      ? allInCategory[currentIndex + 1]
+      : null
+  const categoryArticleCount = allInCategory.length
 
   const breadcrumbs = [
     { label: 'Главная', href: '/' },
@@ -40,7 +45,12 @@ export default async function ArticlePage({ params }) {
   return (
     <>
       <Breadcrumb items={breadcrumbs} />
-      <ArticleView article={article} category={category} relatedArticles={relatedArticles} />
+      <ArticleView
+        article={article}
+        category={category}
+        nextArticle={nextArticle}
+        categoryArticleCount={categoryArticleCount}
+      />
     </>
   )
 }
