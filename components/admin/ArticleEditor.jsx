@@ -135,7 +135,7 @@ export default function ArticleEditor({ content, onUpdate, saveStatus }) {
           padding: '20px 24px',
           minHeight: '300px',
           fontSize: '0.9375rem',
-          lineHeight: 1.45,
+          lineHeight: 1.35,
         }}
         className="tiptap-editor"
       >

@@ -221,35 +221,52 @@ input:focus:not(:focus-visible) {
 /* === TipTap Editor === */
 .tiptap-editor .tiptap {
   outline: none;
+  line-height: 1.35;
 }
 
 .tiptap-editor .tiptap p {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.3em;
+}
+
+/* Paragraph right before a list — tight gap */
+.tiptap-editor .tiptap p + ul,
+.tiptap-editor .tiptap p + ol {
+  margin-top: 0.2em;
 }
 
 .tiptap-editor .tiptap h2 {
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 600;
-  margin: 1.5em 0 0.5em;
+  margin: 1.2em 0 0.3em;
 }
 
 .tiptap-editor .tiptap h3 {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 1.25em 0 0.4em;
+  margin: 1em 0 0.25em;
+}
+
+/* Heading followed by list — tight */
+.tiptap-editor .tiptap h2 + ul,
+.tiptap-editor .tiptap h2 + ol,
+.tiptap-editor .tiptap h3 + ul,
+.tiptap-editor .tiptap h3 + ol {
+  margin-top: 0.2em;
 }
 
 .tiptap-editor .tiptap ul,
 .tiptap-editor .tiptap ol {
-  padding-left: 1.5em;
-  margin-top: 0.8em;
-  margin-bottom: 0.8em;
+  padding-left: 1.2em;
+  margin-top: 0.4em;
+  margin-bottom: 0.6em;
 }
 
 .tiptap-editor .tiptap li {
-  margin-bottom: 0.2em;
+  margin-bottom: 0.1em;
+  padding: 0;
+  line-height: 1.3;
 }
 
 .tiptap-editor .tiptap blockquote {

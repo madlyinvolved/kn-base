@@ -59,7 +59,7 @@ export default function ArticleView({ article, category, relatedArticles }) {
         <div
           className="tiptap-editor"
           style={{
-            lineHeight: 1.45,
+            lineHeight: 1.35,
             fontSize: '1rem',
             color: 'var(--color-text)',
           }}
@@ -70,7 +70,7 @@ export default function ArticleView({ article, category, relatedArticles }) {
         <div
           style={{
             whiteSpace: 'pre-wrap',
-            lineHeight: 1.45,
+            lineHeight: 1.35,
             fontSize: '1rem',
             color: 'var(--color-text)',
           }}
