@@ -91,16 +91,12 @@ export default function ArticleView({
         </div>
       )}
 
-      <Link href={navHref} className="article-next-card">
+      <Link href={navHref} className="article-next-link">
         {navIsHome ? (
-          <span className="article-next-card__home">← На главную</span>
+          <>← На главную</>
         ) : (
           <>
-            <span className="article-next-card__label">Далее</span>
-            <span className="article-next-card__title">
-              <span>{navTitle}</span>
-              <span className="article-next-card__arrow">→</span>
-            </span>
+            Далее: <span className="article-next-link__title">{navTitle}</span> →
           </>
         )}
       </Link>
