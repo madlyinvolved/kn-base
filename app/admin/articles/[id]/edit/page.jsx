@@ -268,7 +268,7 @@ export default function EditArticlePage() {
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', marginBottom: '16px' }}>
               {title || 'Без заголовка'}
             </h1>
-            <div style={{ lineHeight: 1.8, fontSize: '1rem' }} className="tiptap-editor">
+            <div style={{ lineHeight: 1.45, fontSize: '1rem' }} className="tiptap-editor">
               <div
                 className="tiptap"
                 dangerouslySetInnerHTML={{ __html: editorData.html || '<p>Пустая статья</p>' }}

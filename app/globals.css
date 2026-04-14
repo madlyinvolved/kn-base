@@ -224,7 +224,7 @@ input:focus:not(:focus-visible) {
 }
 
 .tiptap-editor .tiptap p {
-  margin-bottom: 0.75em;
+  margin-bottom: 0.5em;
 }
 
 .tiptap-editor .tiptap h2 {
@@ -244,7 +244,12 @@ input:focus:not(:focus-visible) {
 .tiptap-editor .tiptap ul,
 .tiptap-editor .tiptap ol {
   padding-left: 1.5em;
-  margin-bottom: 0.75em;
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+
+.tiptap-editor .tiptap li {
+  margin-bottom: 0.2em;
 }
 
 .tiptap-editor .tiptap blockquote {
