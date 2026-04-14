@@ -36,7 +36,6 @@ export default async function ArticlePage({ params }) {
   const nextArticle = !isLastInCategory && currentIndex >= 0
     ? allInCategory[currentIndex + 1]
     : null
-  const categoryArticleCount = allInCategory.length
 
   let nextCategory = null
   if (isLastInCategory) {
@@ -61,8 +60,6 @@ export default async function ArticlePage({ params }) {
         category={category}
         nextArticle={nextArticle}
         nextCategory={nextCategory}
-        isLastInCategory={isLastInCategory}
-        categoryArticleCount={categoryArticleCount}
       />
     </>
   )

@@ -9,8 +9,6 @@ export default function ArticleView({
   category,
   nextArticle,
   nextCategory,
-  isLastInCategory,
-  categoryArticleCount,
 }) {
   const router = useRouter()
 
@@ -18,13 +16,24 @@ export default function ArticleView({
     router.push(`/article/${id}`)
   }
 
-  const navHref = nextArticle
-    ? `/article/${nextArticle.id}`
-    : `/category/${category.id}`
-  const navLeftLabel = nextArticle ? 'Следующая статья →' : '← Вернуться к разделу'
-  const navRightLabel = nextArticle ? nextArticle.title : category.name
-  const showAllLink = categoryArticleCount > 2
-  const showSectionNav = isLastInCategory
+  let navHref, navTitle, navIsHome
+  if (nextArticle) {
+    navHref = `/article/${nextArticle.id}`
+    navTitle = nextArticle.title
+    navIsHome = false
+  } else if (nextCategory) {
+    navHref = `/category/${nextCategory.id}`
+    navTitle = (
+      <>
+        Раздел «{nextCategory.name}» <span>{nextCategory.icon}</span>
+      </>
+    )
+    navIsHome = false
+  } else {
+    navHref = '/'
+    navTitle = null
+    navIsHome = true
+  }
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
@@ -82,45 +91,19 @@ export default function ArticleView({
         </div>
       )}
 
-      <div style={{ marginTop: '48px' }}>
-        <Link href={navHref} className="article-nav-card">
-          <span className="article-nav-card__label">{navLeftLabel}</span>
-          <span className="article-nav-card__title">{navRightLabel}</span>
-        </Link>
-
-        {showSectionNav && (
-          <Link
-            href={nextCategory ? `/category/${nextCategory.id}` : '/'}
-            className="article-section-nav"
-            style={{ marginTop: '12px' }}
-          >
-            {nextCategory ? (
-              <>
-                <span>Перейти к разделу «{nextCategory.name}»</span>
-                <span className="article-section-nav__icon">{nextCategory.icon}</span>
-              </>
-            ) : (
-              <span>← На главную</span>
-            )}
-          </Link>
+      <Link href={navHref} className="article-next-card">
+        {navIsHome ? (
+          <span className="article-next-card__home">← На главную</span>
+        ) : (
+          <>
+            <span className="article-next-card__label">Далее</span>
+            <span className="article-next-card__title">
+              <span>{navTitle}</span>
+              <span className="article-next-card__arrow">→</span>
+            </span>
+          </>
         )}
-
-        {showAllLink && (
-          <Link
-            href={`/category/${category.id}`}
-            style={{
-              display: 'inline-block',
-              marginTop: '12px',
-              fontSize: '0.8125rem',
-              color: 'var(--color-text-secondary)',
-              textDecoration: 'none',
-              borderBottom: '1px dotted var(--color-text-secondary)',
-            }}
-          >
-            Все статьи раздела «{category.name}»
-          </Link>
-        )}
-      </div>
+      </Link>
     </div>
   )
 }
