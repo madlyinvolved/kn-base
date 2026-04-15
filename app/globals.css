@@ -664,24 +664,24 @@ input:focus:not(:focus-visible) {
 .article-next-link {
   display: block;
   margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--color-border);
   text-align: right;
   font-size: 13px;
-  font-weight: 500;
   color: var(--color-text-secondary);
   text-decoration: none;
-  transition: color var(--transition-fast);
 }
 
 .article-next-link__title {
-  color: var(--color-text);
+  font-size: 14px;
   font-weight: 600;
+  color: var(--color-accent);
 }
 
-.article-next-link:hover {
+.article-next-link__arrow {
   color: var(--color-accent);
 }
 
 .article-next-link:hover .article-next-link__title {
-  color: var(--color-accent);
   text-decoration: underline;
 }
