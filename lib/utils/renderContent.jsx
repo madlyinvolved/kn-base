@@ -223,77 +223,52 @@ function contactColor(name) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
+function parseTopics(topics) {
+  if (!topics) return []
+  return topics
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => l.replace(/^[-•*]\s*/, ''))
+}
+
 function renderContactCards(node, key) {
   const cards = node.attrs?.cards || []
   if (!cards.length) return null
 
   return (
     <div key={key} className="contact-cards-grid">
-      {cards.map((card, idx) => (
-        <div
-          key={idx}
-          style={{
-            padding: '16px',
-            borderRadius: '12px',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface)',
-            fontSize: '0.875rem',
-            lineHeight: 1.5,
-            display: 'flex',
-            gap: '14px',
-            alignItems: 'flex-start',
-          }}
-        >
-          {card.photo ? (
-            <img
-              src={card.photo}
-              alt={card.name || ''}
-              style={{
-                width: 64,
-                height: 64,
-                minWidth: 64,
-                borderRadius: '50%',
-                objectFit: 'cover',
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 64,
-                height: 64,
-                minWidth: 64,
-                borderRadius: '50%',
-                background: contactColor(card.name),
-                color: 'white',
-                fontWeight: 700,
-                fontSize: 22,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {contactInitials(card.name)}
+      {cards.map((card, idx) => {
+        const topics = parseTopics(card.topics)
+        return (
+          <div key={idx} className="contact-card">
+            <div className="contact-card__left">
+              {card.photo ? (
+                <img src={card.photo} alt={card.name || ''} className="contact-card__photo" />
+              ) : (
+                <div
+                  className="contact-card__photo-placeholder"
+                  style={{ background: contactColor(card.name) }}
+                >
+                  {contactInitials(card.name)}
+                </div>
+              )}
+              {card.name && <div className="contact-card__name">{card.name}</div>}
+              {card.slack && <div className="contact-card__slack">{card.slack}</div>}
             </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {card.name && (
-              <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '2px' }}>
-                {card.name}
-              </div>
-            )}
-            {card.slack && (
-              <div style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', marginBottom: '6px' }}>
-                {card.slack}
-              </div>
-            )}
-            {card.topics && (
-              <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>
-                {card.topics}
+            {topics.length > 0 && (
+              <div className="contact-card__right">
+                <div className="contact-card__heading">Можно обратиться по вопросам:</div>
+                <ul className="contact-card__topics">
+                  {topics.map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

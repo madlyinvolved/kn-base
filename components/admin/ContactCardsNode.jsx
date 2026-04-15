@@ -5,21 +5,18 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState, useRef } from 'react'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
-const AVATAR_SIZE = 80
+const AVATAR_SIZE = 100
 const AVATAR_COLORS = ['#e85d2a', '#3b82f6', '#8b5cf6', '#059669', '#d946ef', '#f59e0b', '#6366f1', '#ec4899']
 
 /* Grid uses CSS class .contact-cards-grid for responsive columns */
 
-const cardStyle = {
-  padding: '16px',
-  borderRadius: '12px',
-  border: '1px solid var(--color-border)',
-  background: 'var(--color-surface)',
-  fontSize: '0.875rem',
-  lineHeight: 1.5,
-  display: 'flex',
-  gap: '14px',
-  alignItems: 'flex-start',
+function parseTopics(topics) {
+  if (!topics) return []
+  return topics
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => l.replace(/^[-•*]\s*/, ''))
 }
 
 const inputStyle = {
@@ -76,7 +73,7 @@ function Avatar({ name, photo, size, onClick, uploading }) {
     width: size,
     height: size,
     minWidth: size,
-    borderRadius: '50%',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -252,10 +249,10 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
 
                 <textarea
                   style={textareaStyle}
-                  placeholder="По каким вопросам обращаться"
+                  placeholder="По каким вопросам обращаться (каждая строка — отдельный пункт, можно начинать с - или •)"
                   value={card.topics}
                   onChange={(e) => updateCard(idx, 'topics', e.target.value)}
-                  rows={2}
+                  rows={3}
                 />
               </div>
             ))}
@@ -318,16 +315,41 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
           </div>
         ) : (
           <div className="contact-cards-grid">
-            {cards.map((card, idx) => (
-              <div key={idx} style={cardStyle}>
-                <Avatar name={card.name} photo={card.photo} size={AVATAR_SIZE} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {card.name && <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '2px' }}>{card.name}</div>}
-                  {card.slack && <div style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', marginBottom: '6px' }}>{card.slack}</div>}
-                  {card.topics && <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{card.topics}</div>}
+            {cards.map((card, idx) => {
+              const topics = parseTopics(card.topics)
+              return (
+                <div key={idx} className="contact-card">
+                  <div className="contact-card__left">
+                    {card.photo ? (
+                      <img
+                        src={card.photo}
+                        alt={card.name || ''}
+                        className="contact-card__photo"
+                      />
+                    ) : (
+                      <div
+                        className="contact-card__photo-placeholder"
+                        style={{ background: getAvatarColor(card.name) }}
+                      >
+                        {getInitials(card.name)}
+                      </div>
+                    )}
+                    {card.name && <div className="contact-card__name">{card.name}</div>}
+                    {card.slack && <div className="contact-card__slack">{card.slack}</div>}
+                  </div>
+                  {topics.length > 0 && (
+                    <div className="contact-card__right">
+                      <div className="contact-card__heading">Можно обратиться по вопросам:</div>
+                      <ul className="contact-card__topics">
+                        {topics.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
