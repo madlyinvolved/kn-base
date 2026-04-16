@@ -18,7 +18,7 @@ const cardStyle = {
   animation: 'fadeUp 0.3s ease forwards',
 }
 
-export default function ArticleList({ category, articles }) {
+export default function ArticleList({ category, articles, nextCategory }) {
   return (
     <div>
       <h1
@@ -80,6 +80,20 @@ export default function ArticleList({ category, articles }) {
           </Link>
         ))}
       </div>
+
+      <Link href={nextCategory ? `/category/${nextCategory.id}` : '/'} className="article-next-link">
+        {nextCategory ? (
+          <>
+            Следующий раздел:{' '}
+            <span className="article-next-link__title">{nextCategory.name}</span>{' '}
+            <span className="article-next-link__arrow">→</span>
+          </>
+        ) : (
+          <>
+            <span className="article-next-link__arrow">←</span> На главную
+          </>
+        )}
+      </Link>
     </div>
   )
 }
