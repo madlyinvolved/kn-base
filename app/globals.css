@@ -674,18 +674,25 @@ input:focus:not(:focus-visible) {
   box-shadow: var(--shadow-md);
 }
 
-.contact-card__photo {
-  width: 48px;
-  height: 48px;
+.contact-card__photo,
+.tiptap-editor .tiptap img.contact-card__photo {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  max-width: 48px;
   border-radius: 8px;
   object-fit: cover;
+  overflow: hidden;
   display: block;
   flex-shrink: 0;
+  margin: 0;
 }
 
 .contact-card__photo-placeholder {
   width: 48px;
   height: 48px;
+  min-width: 48px;
+  max-width: 48px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -695,6 +702,7 @@ input:focus:not(:focus-visible) {
   font-weight: 500;
   user-select: none;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .contact-card__body {
