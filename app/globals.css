@@ -662,10 +662,10 @@ input:focus:not(:focus-visible) {
 
 .contact-card {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px 16px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 0.5px solid var(--color-border);
   border-radius: 12px;
   transition: box-shadow var(--transition-fast);
 }
@@ -674,75 +674,54 @@ input:focus:not(:focus-visible) {
   box-shadow: var(--shadow-md);
 }
 
-.contact-card__left {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  width: 100px;
-}
-
 .contact-card__photo {
-  width: 100px;
-  height: 100px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   object-fit: cover;
   display: block;
+  flex-shrink: 0;
 }
 
 .contact-card__photo-placeholder {
-  width: 100px;
-  height: 100px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 700;
-  font-size: 32px;
-  letter-spacing: 1px;
+  font-size: 14px;
+  font-weight: 500;
   user-select: none;
+  flex-shrink: 0;
 }
 
-.contact-card__name {
-  margin-top: 8px;
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--color-text);
-  line-height: 1.25;
-  word-break: break-word;
-}
-
-.contact-card__slack {
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  word-break: break-all;
-}
-
-.contact-card__right {
+.contact-card__body {
   flex: 1;
   min-width: 0;
 }
 
-.contact-card__heading {
+.contact-card__name {
   font-weight: 500;
-  font-size: 13px;
-  color: var(--color-text-secondary);
+  font-size: 14px;
+  color: var(--color-text);
   margin-bottom: 6px;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .contact-card__topics {
+  list-style: disc;
   margin: 0;
-  padding-left: 1.1em;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--color-text);
-  list-style-type: disc;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
 }
 
 .contact-card__topics li {
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 /* === Article bottom next-link === */

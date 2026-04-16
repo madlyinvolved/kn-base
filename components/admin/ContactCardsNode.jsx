@@ -5,8 +5,8 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import { useState, useRef } from 'react'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
-const AVATAR_SIZE = 100
-const AVATAR_COLORS = ['#e85d2a', '#3b82f6', '#8b5cf6', '#059669', '#d946ef', '#f59e0b', '#6366f1', '#ec4899']
+const AVATAR_SIZE = 48
+const AVATAR_COLORS = ['#e85d2a', '#6d5ce7', '#0ea574', '#d97706']
 
 /* Grid uses CSS class .contact-cards-grid for responsive columns */
 
@@ -50,17 +50,19 @@ const smallBtnStyle = {
 }
 
 function emptyCard() {
-  return { name: '', slack: '', topics: '', photo: null }
+  return { name: '', topics: '', photo: null }
 }
 
 function getInitials(name) {
   if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
+  const cleaned = name.replace(/^@/, '')
+  const parts = cleaned.split(/[.\s_-]+/).filter(Boolean)
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-  return name.trim().slice(0, 2).toUpperCase()
+  return cleaned.slice(0, 2).toUpperCase()
 }
 
-function getAvatarColor(name) {
+function getAvatarColor(name, idx) {
+  if (typeof idx === 'number') return AVATAR_COLORS[idx % AVATAR_COLORS.length]
   let hash = 0
   for (let i = 0; i < (name || '').length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
@@ -68,7 +70,7 @@ function getAvatarColor(name) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-function Avatar({ name, photo, size, onClick, uploading }) {
+function Avatar({ name, photo, size, onClick, uploading, color }) {
   const avatarBase = {
     width: size,
     height: size,
@@ -104,11 +106,10 @@ function Avatar({ name, photo, size, onClick, uploading }) {
     <div
       style={{
         ...avatarBase,
-        background: getAvatarColor(name),
+        background: color || getAvatarColor(name),
         color: 'white',
-        fontWeight: 700,
-        fontSize: size * 0.35,
-        letterSpacing: '0.5px',
+        fontWeight: 500,
+        fontSize: 14,
       }}
       onClick={onClick}
       title={onClick ? 'Загрузить фото' : undefined}
@@ -225,6 +226,7 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
                     name={card.name}
                     photo={card.photo}
                     size={AVATAR_SIZE}
+                    color={getAvatarColor(card.name, idx)}
                     onClick={() => triggerFileInput(idx)}
                     uploading={uploadingIdx === idx}
                   />
@@ -234,15 +236,9 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
                     </div>
                     <input
                       style={inputStyle}
-                      placeholder="Имя"
+                      placeholder="Name.Surname"
                       value={card.name}
                       onChange={(e) => updateCard(idx, 'name', e.target.value)}
-                    />
-                    <input
-                      style={inputStyle}
-                      placeholder="Slack (@anna.leonova)"
-                      value={card.slack}
-                      onChange={(e) => updateCard(idx, 'slack', e.target.value)}
                     />
                   </div>
                 </div>
@@ -284,7 +280,7 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
     )
   }
 
-  const hasContent = cards.some((c) => c.name || c.slack || c.topics)
+  const hasContent = cards.some((c) => c.name || c.topics || c.photo)
 
   return (
     <NodeViewWrapper data-contact-cards>
@@ -319,34 +315,30 @@ function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
               const topics = parseTopics(card.topics)
               return (
                 <div key={idx} className="contact-card">
-                  <div className="contact-card__left">
-                    {card.photo ? (
-                      <img
-                        src={card.photo}
-                        alt={card.name || ''}
-                        className="contact-card__photo"
-                      />
-                    ) : (
-                      <div
-                        className="contact-card__photo-placeholder"
-                        style={{ background: getAvatarColor(card.name) }}
-                      >
-                        {getInitials(card.name)}
-                      </div>
-                    )}
+                  {card.photo ? (
+                    <img
+                      src={card.photo}
+                      alt={card.name || ''}
+                      className="contact-card__photo"
+                    />
+                  ) : (
+                    <div
+                      className="contact-card__photo-placeholder"
+                      style={{ background: getAvatarColor(card.name, idx) }}
+                    >
+                      {getInitials(card.name)}
+                    </div>
+                  )}
+                  <div className="contact-card__body">
                     {card.name && <div className="contact-card__name">{card.name}</div>}
-                    {card.slack && <div className="contact-card__slack">{card.slack}</div>}
-                  </div>
-                  {topics.length > 0 && (
-                    <div className="contact-card__right">
-                      <div className="contact-card__heading">Можно обратиться по вопросам:</div>
+                    {topics.length > 0 && (
                       <ul className="contact-card__topics">
                         {topics.map((t, i) => (
                           <li key={i}>{t}</li>
                         ))}
                       </ul>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )
             })}
