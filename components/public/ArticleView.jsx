@@ -35,6 +35,9 @@ export default function ArticleView({
     navIsHome = true
   }
 
+  const wordCount = (article.content || '').trim().split(/\s+/).filter(Boolean).length
+  const readingMinutes = Math.max(1, Math.ceil(wordCount / 200))
+
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <span
@@ -52,18 +55,39 @@ export default function ArticleView({
         {category.icon} {category.name}
       </span>
 
-      <h1
+      <div
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1.75rem',
-          fontWeight: 700,
-          marginBottom: '0',
-          paddingBottom: '0.8em',
-          borderBottom: '1px solid var(--color-border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          gap: '12px',
         }}
       >
-        {article.title}
-      </h1>
+        <h1
+          style={{
+            flex: 1,
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            marginBottom: '0',
+            paddingBottom: '0.8em',
+            borderBottom: '1px solid var(--color-border)',
+          }}
+        >
+          {article.title}
+        </h1>
+        <span
+          style={{
+            fontSize: '12px',
+            color: 'var(--color-text-secondary)',
+            whiteSpace: 'nowrap',
+            paddingBottom: '0.8em',
+            borderBottom: '1px solid var(--color-border)',
+          }}
+        >
+          ~{readingMinutes} мин
+        </span>
+      </div>
 
       {article.contentJson ? (
         <div
