@@ -59,8 +59,10 @@ export default function ArticleView({
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'baseline',
+          alignItems: 'first baseline',
           gap: '12px',
+          paddingBottom: '0.8em',
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
         <h1
@@ -69,9 +71,7 @@ export default function ArticleView({
             fontFamily: 'var(--font-display)',
             fontSize: '1.75rem',
             fontWeight: 700,
-            marginBottom: '0',
-            paddingBottom: '0.8em',
-            borderBottom: '1px solid var(--color-border)',
+            margin: 0,
           }}
         >
           {article.title}
@@ -81,8 +81,6 @@ export default function ArticleView({
             fontSize: '12px',
             color: 'var(--color-text-secondary)',
             whiteSpace: 'nowrap',
-            paddingBottom: '0.8em',
-            borderBottom: '1px solid var(--color-border)',
           }}
         >
           ~{readingMinutes} мин
