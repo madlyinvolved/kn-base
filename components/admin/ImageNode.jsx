@@ -2,16 +2,33 @@
 
 import { Image as TiptapImage } from '@tiptap/extension-image'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
 const SIZE_PRESETS = [25, 50, 75, 100]
 
+const hsInputStyle = {
+  width: '100%',
+  padding: '6px 8px',
+  fontSize: '0.8125rem',
+  fontFamily: 'var(--font-body)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '6px',
+  outline: 'none',
+  marginBottom: '6px',
+  boxSizing: 'border-box',
+}
+
 function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor }) {
-  const { src, alt, width, align, caption, wrap } = node.attrs
+  const { src, alt, width, align, caption, wrap, hotspots: savedHotspots } = node.attrs
+  const hotspots = savedHotspots || []
   const [replacing, setReplacing] = useState(false)
   const [customWidth, setCustomWidth] = useState(String(width || 100))
   const replaceRef = useRef(null)
+  const [hsMode, setHsMode] = useState(false)
+  const [editIdx, setEditIdx] = useState(null)
+  const [dragIdx, setDragIdx] = useState(null)
+  const imgContainerRef = useRef(null)
 
   const figureAlign = {
     margin: '1em 0',
@@ -107,10 +124,135 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     updateAttributes({ caption: text || null })
   }
 
+  function hsUpdate(next) {
+    updateAttributes({ hotspots: next })
+  }
+
+  function hsAdd(e) {
+    if (!hsMode) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10
+    const next = [...hotspots, { x, y, title: '', description: '' }]
+    hsUpdate(next)
+    setEditIdx(next.length - 1)
+  }
+
+  function hsRemove(idx) {
+    hsUpdate(hotspots.filter((_, i) => i !== idx))
+    if (editIdx === idx) setEditIdx(null)
+    else if (editIdx > idx) setEditIdx(editIdx - 1)
+  }
+
+  function hsEditField(idx, field, value) {
+    const next = hotspots.map((h, i) => (i === idx ? { ...h, [field]: value } : h))
+    hsUpdate(next)
+  }
+
+  const handleDragStart = useCallback((idx, e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragIdx(idx)
+  }, [])
+
+  useEffect(() => {
+    if (dragIdx === null) return
+    function onMove(e) {
+      const container = imgContainerRef.current
+      if (!container) return
+      const rect = container.getBoundingClientRect()
+      const x = Math.min(100, Math.max(0, Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10))
+      const y = Math.min(100, Math.max(0, Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10))
+      const next = hotspots.map((h, i) => (i === dragIdx ? { ...h, x, y } : h))
+      hsUpdate(next)
+    }
+    function onUp() {
+      setDragIdx(null)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [dragIdx, hotspots]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const cursorStyle = hsMode ? { ...imgStyle, cursor: 'crosshair' } : imgStyle
+
   return (
     <NodeViewWrapper as="figure" style={figureAlign} data-image-node draggable={false}>
-      <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
-        <img src={src} alt={alt || caption || ''} style={imgStyle} draggable={false} />
+      <div
+        ref={imgContainerRef}
+        style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}
+        contentEditable={false}
+      >
+        <img
+          src={src}
+          alt={alt || caption || ''}
+          style={cursorStyle}
+          draggable={false}
+          onClick={hsMode ? hsAdd : undefined}
+        />
+
+        {/* Hotspot dots (always visible when they exist) */}
+        {hotspots.map((h, idx) => (
+          <div
+            key={idx}
+            className="hotspot-dot"
+            style={{ left: `${h.x}%`, top: `${h.y}%`, cursor: hsMode ? 'grab' : 'default', animation: hsMode ? 'none' : undefined }}
+            onMouseDown={hsMode ? (e) => handleDragStart(idx, e) : undefined}
+            onClick={(e) => { e.stopPropagation(); if (hsMode) setEditIdx(idx) }}
+          >
+            {idx + 1}
+            {hsMode && (
+              <button
+                type="button"
+                className="hotspot-dot__delete"
+                onClick={(e) => { e.stopPropagation(); hsRemove(idx) }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Hotspot mode overlay bar */}
+        {hsMode && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: '6px',
+              padding: '6px 12px',
+              background: 'rgba(0,0,0,0.75)',
+              borderRadius: '8px',
+              zIndex: 20,
+              fontSize: '0.75rem',
+              color: 'white',
+              alignItems: 'center',
+            }}
+          >
+            <span>Кликните на фото чтобы добавить точку</span>
+            <button
+              type="button"
+              style={{
+                background: 'var(--color-accent)',
+                border: 'none',
+                color: 'white',
+                padding: '4px 12px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+              onClick={(e) => { e.stopPropagation(); setHsMode(false); setEditIdx(null) }}
+            >
+              Готово
+            </button>
+          </div>
+        )}
 
         <div style={toolbarStyle} contentEditable={false}>
           {/* Alignment */}
@@ -169,6 +311,13 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
 
           <span style={sep} />
 
+          {/* Hotspots */}
+          <button type="button" style={hsMode ? btnActive : btn} onClick={() => { setHsMode(!hsMode); setEditIdx(null) }} title="Точки на фото">
+            ●
+          </button>
+
+          <span style={sep} />
+
           {/* Replace */}
           <button type="button" style={btn} onClick={() => replaceRef.current?.click()} title="Заменить" disabled={replacing}>
             {replacing ? '…' : '↻'}
@@ -200,6 +349,50 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
       >
         {caption || ''}
       </figcaption>
+
+      {/* Hotspot edit panel */}
+      {hsMode && editIdx !== null && hotspots[editIdx] && (
+        <div
+          contentEditable={false}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: '-300px',
+            width: '280px',
+            background: 'var(--color-surface)',
+            borderLeft: '2px solid var(--color-accent)',
+            borderRadius: '0 12px 12px 0',
+            padding: '16px',
+            boxShadow: 'var(--shadow-md)',
+            zIndex: 25,
+            fontSize: '0.875rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div className="hotspot-panel__number">{editIdx + 1}</div>
+            <button
+              type="button"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', fontSize: '16px' }}
+              onClick={() => setEditIdx(null)}
+            >
+              ✕
+            </button>
+          </div>
+          <input
+            style={hsInputStyle}
+            placeholder="Заголовок"
+            value={hotspots[editIdx].title}
+            onChange={(e) => hsEditField(editIdx, 'title', e.target.value)}
+          />
+          <textarea
+            style={{ ...hsInputStyle, resize: 'vertical', minHeight: '60px', lineHeight: 1.4 }}
+            placeholder="Описание"
+            value={hotspots[editIdx].description}
+            onChange={(e) => hsEditField(editIdx, 'description', e.target.value)}
+            rows={3}
+          />
+        </div>
+      )}
     </NodeViewWrapper>
   )
 }
@@ -234,6 +427,16 @@ export const CustomImage = TiptapImage.extend({
         default: false,
         parseHTML: (el) => el.getAttribute('data-wrap') === 'true',
         renderHTML: (attrs) => (attrs.wrap ? { 'data-wrap': 'true' } : {}),
+      },
+      hotspots: {
+        default: [],
+        parseHTML: (el) => {
+          try { return JSON.parse(el.getAttribute('data-hotspots') || '[]') } catch { return [] }
+        },
+        renderHTML: (attrs) => {
+          if (!attrs.hotspots?.length) return {}
+          return { 'data-hotspots': JSON.stringify(attrs.hotspots) }
+        },
       },
     }
   },

@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 
 /**
@@ -131,6 +134,13 @@ function renderNode(node, key) {
 
 function renderImage(node, key) {
   const attrs = node.attrs || {}
+  if (attrs.hotspots?.length > 0) {
+    return <ImageWithHotspots key={key} attrs={attrs} />
+  }
+  return renderSimpleImage(attrs, key)
+}
+
+function renderSimpleImage(attrs, key) {
   const align = attrs.align || 'center'
   const width = attrs.width || 100
   const wrap = attrs.wrap === true
@@ -172,6 +182,83 @@ function renderImage(node, key) {
         </figcaption>
       )}
     </figure>
+  )
+}
+
+function ImageWithHotspots({ attrs }) {
+  const [activeIdx, setActiveIdx] = useState(null)
+
+  const align = attrs.align || 'center'
+  const width = attrs.width || 100
+  const wrap = attrs.wrap === true
+  const hotspots = attrs.hotspots || []
+
+  const figureStyle = {
+    margin: '1em 0',
+    textAlign: align === 'center' ? 'center' : align === 'right' ? 'right' : 'left',
+  }
+
+  if (wrap) {
+    figureStyle.float = align === 'right' ? 'right' : 'left'
+    figureStyle.maxWidth = '50%'
+    figureStyle.marginLeft = align === 'right' ? '16px' : 0
+    figureStyle.marginRight = align === 'left' ? '16px' : 0
+  }
+
+  const imgStyle = {
+    width: '100%',
+    maxWidth: '100%',
+    height: 'auto',
+    borderRadius: '8px',
+    display: 'block',
+  }
+
+  const active = activeIdx !== null ? hotspots[activeIdx] : null
+
+  return (
+    <>
+      <figure style={figureStyle}>
+        <div style={{ position: 'relative', display: 'inline-block', width: `${width}%`, maxWidth: '100%' }}>
+          <img src={attrs.src} alt={attrs.alt || attrs.caption || ''} style={imgStyle} />
+          {hotspots.map((h, idx) => (
+            <div
+              key={idx}
+              className="hotspot-dot"
+              style={{ left: `${h.x}%`, top: `${h.y}%` }}
+              onClick={() => setActiveIdx(activeIdx === idx ? null : idx)}
+            >
+              {idx + 1}
+            </div>
+          ))}
+        </div>
+        {attrs.caption && (
+          <figcaption
+            style={{
+              fontSize: '0.8125rem',
+              color: 'var(--color-text-secondary)',
+              fontStyle: 'italic',
+              textAlign: align,
+              marginTop: '6px',
+            }}
+          >
+            {attrs.caption}
+          </figcaption>
+        )}
+      </figure>
+
+      <div className={`hotspot-panel ${active ? 'hotspot-panel--active' : ''}`}>
+        {active && (
+          <>
+            <button className="hotspot-panel__close" onClick={() => setActiveIdx(null)}>
+              ✕
+            </button>
+            <div className="hotspot-panel__number">{activeIdx + 1}</div>
+            {active.title && <div className="hotspot-panel__title">{active.title}</div>}
+            {active.description && <div className="hotspot-panel__desc">{active.description}</div>}
+          </>
+        )}
+      </div>
+    </>
   )
 }
 
