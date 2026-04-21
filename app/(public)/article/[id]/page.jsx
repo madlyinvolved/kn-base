@@ -4,6 +4,7 @@ import {
   getCategoryById,
   getArticlesByCategory,
   getAllArticles,
+  getCategories,
 } from '../../../../lib/data/queries.js'
 import ArticleView from '../../../../components/public/ArticleView.jsx'
 import Breadcrumb from '../../../../components/shared/Breadcrumb.jsx'
@@ -29,7 +30,21 @@ export default async function ArticlePage({ params }) {
   if (!category) notFound()
 
   const allInCategory = await getArticlesByCategory(article.category)
-  const relatedArticles = allInCategory.filter((a) => a.id !== article.id)
+  const currentIndex = allInCategory.findIndex((a) => a.id === article.id)
+  const isLastInCategory =
+    currentIndex >= 0 && currentIndex === allInCategory.length - 1
+  const nextArticle = !isLastInCategory && currentIndex >= 0
+    ? allInCategory[currentIndex + 1]
+    : null
+
+  let nextCategory = null
+  if (isLastInCategory) {
+    const categories = await getCategories()
+    const catIdx = categories.findIndex((c) => c.id === category.id)
+    if (catIdx >= 0 && catIdx < categories.length - 1) {
+      nextCategory = categories[catIdx + 1]
+    }
+  }
 
   const breadcrumbs = [
     { label: 'Главная', href: '/' },
@@ -40,7 +55,12 @@ export default async function ArticlePage({ params }) {
   return (
     <>
       <Breadcrumb items={breadcrumbs} />
-      <ArticleView article={article} category={category} relatedArticles={relatedArticles} />
+      <ArticleView
+        article={article}
+        category={category}
+        nextArticle={nextArticle}
+        nextCategory={nextCategory}
+      />
     </>
   )
 }

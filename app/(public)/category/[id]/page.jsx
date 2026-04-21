@@ -22,6 +22,11 @@ export default async function CategoryPage({ params }) {
 
   const articles = await getArticlesByCategory(id)
 
+  const allCategories = await getCategories()
+  const catIdx = allCategories.findIndex((c) => c.id === category.id)
+  const nextCategory =
+    catIdx >= 0 && catIdx < allCategories.length - 1 ? allCategories[catIdx + 1] : null
+
   const breadcrumbs = [
     { label: 'Главная', href: '/' },
     { label: category.name },
@@ -30,7 +35,7 @@ export default async function CategoryPage({ params }) {
   return (
     <>
       <Breadcrumb items={breadcrumbs} />
-      <ArticleList category={category} articles={articles} />
+      <ArticleList category={category} articles={articles} nextCategory={nextCategory} />
     </>
   )
 }

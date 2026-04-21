@@ -2,90 +2,129 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { renderContent } from '../../lib/utils/renderContent.jsx'
+import { renderContent, renderTipTapContent } from '../../lib/utils/renderContent.jsx'
 
-const relatedSectionStyle = {
-  marginTop: '48px',
-  padding: '24px',
-  background: 'var(--color-surface)',
-  borderRadius: '12px',
-  border: '1px solid var(--color-border)',
-}
-
-const relatedLinkStyle = {
-  display: 'block',
-  padding: '8px 0',
-  color: 'var(--color-accent)',
-  textDecoration: 'none',
-  fontSize: '0.9375rem',
-  transition: 'opacity var(--transition-fast)',
-}
-
-export default function ArticleView({ article, category, relatedArticles }) {
+export default function ArticleView({
+  article,
+  category,
+  nextArticle,
+  nextCategory,
+}) {
   const router = useRouter()
 
   const handleArticleClick = (id) => {
     router.push(`/article/${id}`)
   }
 
+  let navHref, navTitle, navIsHome
+  if (nextArticle) {
+    navHref = `/article/${nextArticle.id}`
+    navTitle = nextArticle.title
+    navIsHome = false
+  } else if (nextCategory) {
+    navHref = `/category/${nextCategory.id}`
+    navTitle = (
+      <>
+        Раздел «{nextCategory.name}» <span>{nextCategory.icon}</span>
+      </>
+    )
+    navIsHome = false
+  } else {
+    navHref = '/'
+    navTitle = null
+    navIsHome = true
+  }
+
+  const wordCount = (article.content || '').trim().split(/\s+/).filter(Boolean).length
+  const readingMinutes = Math.max(1, Math.ceil(wordCount / 200))
+
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <span
         style={{
           display: 'inline-block',
-          padding: '4px 12px',
+          padding: '3px 10px',
           borderRadius: '20px',
           fontSize: '0.75rem',
           fontWeight: 600,
           color: 'white',
           background: category.color,
-          marginBottom: '12px',
+          marginBottom: '8px',
         }}
       >
         {category.icon} {category.name}
       </span>
 
-      <h1
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '2rem',
-          marginBottom: '20px',
-        }}
-      >
-        {article.title}
-      </h1>
-
       <div
         style={{
-          whiteSpace: 'pre-wrap',
-          lineHeight: 1.8,
-          fontSize: '1rem',
-          color: 'var(--color-text)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'first baseline',
+          gap: '12px',
+          paddingBottom: '0.8em',
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
-        {renderContent(article.content, handleArticleClick)}
+        <h1
+          style={{
+            flex: 1,
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            margin: 0,
+          }}
+        >
+          {article.title}
+        </h1>
+        <span
+          style={{
+            fontSize: '12px',
+            color: 'var(--color-text-secondary)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ~{readingMinutes} мин
+        </span>
       </div>
 
-      {relatedArticles.length > 0 && (
-        <div style={relatedSectionStyle}>
-          <h3
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.125rem',
-              marginBottom: '12px',
-            }}
-          >
-            Ещё в этом разделе
-          </h3>
-          <div style={{ display: 'grid', gap: '4px' }}>
-            {relatedArticles.map((a) => (
-              <Link key={a.id} href={`/article/${a.id}`} style={relatedLinkStyle}>
-                → {a.title}
-              </Link>
-            ))}
-          </div>
+      {article.contentJson ? (
+        <div
+          className="tiptap-editor"
+          style={{
+            lineHeight: 1.35,
+            fontSize: '1rem',
+            color: 'var(--color-text)',
+            marginTop: '1.2em',
+          }}
+        >
+          <div className="tiptap">{renderTipTapContent(article.contentJson)}</div>
+        </div>
+      ) : (
+        <div
+          style={{
+            whiteSpace: 'pre-wrap',
+            lineHeight: 1.35,
+            fontSize: '1rem',
+            color: 'var(--color-text)',
+            marginTop: '1.2em',
+          }}
+        >
+          {renderContent(article.content, handleArticleClick)}
         </div>
       )}
+
+      <Link href={navHref} className="article-next-link">
+        {navIsHome ? (
+          <>
+            <span className="article-next-link__arrow">←</span> На главную
+          </>
+        ) : (
+          <>
+            Далее: <span className="article-next-link__title">{navTitle}</span>{' '}
+            <span className="article-next-link__arrow">→</span>
+          </>
+        )}
+      </Link>
     </div>
   )
 }

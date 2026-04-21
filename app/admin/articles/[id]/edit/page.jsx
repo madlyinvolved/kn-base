@@ -6,50 +6,6 @@ import { createClient } from '../../../../../lib/supabase/client.js'
 import ArticleEditor from '../../../../../components/admin/ArticleEditor.jsx'
 import { textToTipTapJSON, isValidTipTapDoc } from '../../../../../lib/utils/tiptap.js'
 
-const titleStyle = {
-  fontFamily: 'var(--font-display)',
-  fontSize: '2rem',
-  fontWeight: 700,
-}
-
-const fieldStyle = { marginBottom: '16px' }
-
-const labelStyle = {
-  display: 'block',
-  fontSize: '0.8125rem',
-  fontWeight: 500,
-  marginBottom: '6px',
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  fontSize: '0.9375rem',
-  fontFamily: 'var(--font-body)',
-  border: '1px solid var(--color-border)',
-  borderRadius: '8px',
-  outline: 'none',
-  boxSizing: 'border-box',
-}
-
-const selectStyle = { ...inputStyle, fontSize: '0.875rem' }
-
-const btnBase = {
-  padding: '10px 20px',
-  fontSize: '0.875rem',
-  fontFamily: 'var(--font-body)',
-  fontWeight: 600,
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-}
-
-const statusStyle = {
-  fontSize: '0.75rem',
-  color: 'var(--color-text-secondary)',
-  marginLeft: '12px',
-}
-
 const previewOverlayStyle = {
   position: 'fixed',
   top: 0,
@@ -74,6 +30,16 @@ const previewCardStyle = {
   boxShadow: 'var(--shadow-lg)',
 }
 
+function computeSnapshot(title, summary, categoryId, editorData, isPublished) {
+  return JSON.stringify({
+    title: title.trim(),
+    summary: summary.trim(),
+    categoryId,
+    json: editorData.json,
+    isPublished,
+  })
+}
+
 export default function EditArticlePage() {
   const router = useRouter()
   const params = useParams()
@@ -90,19 +56,30 @@ export default function EditArticlePage() {
   const [saveStatus, setSaveStatus] = useState('')
   const [showPreview, setShowPreview] = useState(false)
   const [loaded, setLoaded] = useState(false)
-  const autosaveTimer = useRef(null)
+  const [canEdit, setCanEdit] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
   const lastSaved = useRef('')
 
   const supabase = createClient()
 
   useEffect(() => {
     async function load() {
-      const [{ data: cats }, { data: article }] = await Promise.all([
+      const [{ data: cats }, { data: article }, { data: userRes }] = await Promise.all([
         supabase.from('categories').select('*').order('sort_order'),
         supabase.from('articles').select('*').eq('id', articleId).single(),
+        supabase.auth.getUser(),
       ])
 
       setCategories(cats || [])
+
+      if (userRes?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userRes.user.id)
+          .single()
+        setCanEdit(profile?.role === 'admin')
+      }
 
       if (article) {
         setTitle(article.title)
@@ -110,12 +87,19 @@ export default function EditArticlePage() {
         setCategoryId(article.category_id)
         setIsPublished(article.is_published)
 
-        // Use TipTap JSON if valid, otherwise convert plain text
         if (isValidTipTapDoc(article.content)) {
           setInitialContent(article.content)
         } else if (article.content_text) {
           setInitialContent(textToTipTapJSON(article.content_text))
         }
+
+        lastSaved.current = computeSnapshot(
+          article.title,
+          article.summary || '',
+          article.category_id,
+          { json: article.content || {}, text: article.content_text || '', html: '' },
+          article.is_published,
+        )
       }
 
       setLoaded(true)
@@ -124,24 +108,29 @@ export default function EditArticlePage() {
     load()
   }, [articleId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!loaded) return
+    const current = computeSnapshot(title, summary, categoryId, editorData, isPublished)
+    setIsDirty(current !== lastSaved.current)
+  }, [title, summary, categoryId, editorData, isPublished, loaded])
+
   const doSave = useCallback(
     async (publish) => {
+      if (!canEdit) return false
       setSaving(true)
       setSaveStatus('Сохранение...')
 
+      const nextPublished = publish != null ? publish : isPublished
       const payload = {
         title: title.trim(),
         summary: summary.trim() || null,
         category_id: categoryId,
         content: editorData.json,
         content_text: editorData.text,
-        is_published: publish != null ? publish : isPublished,
+        is_published: nextPublished,
       }
 
-      const { error } = await supabase
-        .from('articles')
-        .update(payload)
-        .eq('id', articleId)
+      const { error } = await supabase.from('articles').update(payload).eq('id', articleId)
 
       setSaving(false)
 
@@ -151,25 +140,13 @@ export default function EditArticlePage() {
       }
 
       if (publish != null) setIsPublished(publish)
-      lastSaved.current = JSON.stringify(payload)
+      lastSaved.current = computeSnapshot(title, summary, categoryId, editorData, nextPublished)
+      setIsDirty(false)
       setSaveStatus('Сохранено')
       return true
     },
-    [title, summary, categoryId, editorData, articleId, isPublished, supabase],
+    [title, summary, categoryId, editorData, articleId, isPublished, canEdit, supabase],
   )
-
-  // Autosave every 30 seconds
-  useEffect(() => {
-    if (!loaded) return
-    autosaveTimer.current = setInterval(() => {
-      const current = JSON.stringify({ title, summary, categoryId, text: editorData.text })
-      if (current !== lastSaved.current && title.trim()) {
-        doSave(null)
-      }
-    }, 30000)
-
-    return () => clearInterval(autosaveTimer.current)
-  }, [title, summary, categoryId, editorData, doSave, loaded])
 
   if (!loaded) {
     return (
@@ -179,27 +156,74 @@ export default function EditArticlePage() {
     )
   }
 
+  const canSave = canEdit && isDirty && title.trim().length > 0 && !saving
+
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={titleStyle}>Редактирование статьи</h1>
-        <span style={statusStyle}>{saveStatus}</span>
+      <div className="editor-sticky-actions">
+        <button className="editor-btn-ghost" onClick={() => router.push('/admin/articles')}>
+          ← Назад
+        </button>
+
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>
+          Редактирование
+        </h1>
+
+        <div style={{ flex: 1 }} />
+
+        {isDirty && <span className="editor-unsaved-banner">Несохранённые изменения</span>}
+        {!isDirty && saveStatus && <span className="editor-save-status">{saveStatus}</span>}
+
+        <button
+          className="editor-btn-primary"
+          onClick={() => doSave(isPublished)}
+          disabled={!canSave}
+          title={!canEdit ? 'У вас нет прав на редактирование' : undefined}
+        >
+          Сохранить
+        </button>
+        {!isPublished && (
+          <button
+            className="editor-btn-outline"
+            onClick={() => doSave(true)}
+            disabled={!canEdit || !title.trim() || saving}
+          >
+            Опубликовать
+          </button>
+        )}
+        {isPublished && (
+          <button
+            className="editor-btn-outline"
+            onClick={() => doSave(false)}
+            disabled={!canEdit || saving}
+          >
+            Снять с публикации
+          </button>
+        )}
+        <button className="editor-btn-outline" onClick={() => setShowPreview(true)}>
+          Предпросмотр
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '16px', marginBottom: '20px' }}>
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Заголовок</label>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '16px', marginBottom: '16px' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
+            Заголовок
+          </label>
           <input
-            style={inputStyle}
+            className="editor-field-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="Введите заголовок статьи"
           />
         </div>
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Категория</label>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
+            Категория
+          </label>
           <select
-            style={selectStyle}
+            className="editor-field-select"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
           >
@@ -212,60 +236,24 @@ export default function EditArticlePage() {
         </div>
       </div>
 
-      <div style={fieldStyle}>
-        <label style={labelStyle}>Краткое описание</label>
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px', color: 'var(--color-text-secondary)' }}>
+          Краткое описание
+        </label>
         <input
-          style={inputStyle}
+          className="editor-field-summary"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
+          placeholder="Краткое описание для поиска и превью"
         />
       </div>
 
       <div style={{ marginBottom: '20px' }}>
-        <label style={labelStyle}>Содержание</label>
         {initialContent !== null ? (
-          <ArticleEditor content={initialContent} onUpdate={setEditorData} />
+          <ArticleEditor content={initialContent} onUpdate={setEditorData} saveStatus={!isDirty ? saveStatus : undefined} />
         ) : (
-          <ArticleEditor content={null} onUpdate={setEditorData} />
+          <ArticleEditor content={null} onUpdate={setEditorData} saveStatus={!isDirty ? saveStatus : undefined} />
         )}
-      </div>
-
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <button
-          style={{ ...btnBase, background: 'var(--color-accent)', color: 'white' }}
-          onClick={() => doSave(true)}
-          disabled={saving}
-        >
-          {isPublished ? 'Сохранить' : 'Опубликовать'}
-        </button>
-        {isPublished && (
-          <button
-            style={{ ...btnBase, background: '#fef3c7', color: '#92400e' }}
-            onClick={() => doSave(false)}
-            disabled={saving}
-          >
-            Снять с публикации
-          </button>
-        )}
-        <button
-          style={{ ...btnBase, background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-          onClick={() => doSave(null)}
-          disabled={saving}
-        >
-          Сохранить черновик
-        </button>
-        <button
-          style={{ ...btnBase, background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
-          onClick={() => setShowPreview(true)}
-        >
-          Предпросмотр
-        </button>
-        <button
-          style={{ ...btnBase, background: 'transparent', color: 'var(--color-text-secondary)' }}
-          onClick={() => router.push('/admin/articles')}
-        >
-          ← Назад
-        </button>
       </div>
 
       {showPreview && (
@@ -273,21 +261,19 @@ export default function EditArticlePage() {
           <div style={previewCardStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem' }}>Предпросмотр</h2>
-              <button
-                style={{ ...btnBase, padding: '6px 12px', fontSize: '0.8125rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-                onClick={() => setShowPreview(false)}
-              >
+              <button className="editor-btn-outline" style={{ padding: '6px 12px', fontSize: '0.8125rem' }} onClick={() => setShowPreview(false)}>
                 Закрыть
               </button>
             </div>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', marginBottom: '16px' }}>
               {title || 'Без заголовка'}
             </h1>
-            <div
-              style={{ lineHeight: 1.8, fontSize: '1rem' }}
-              className="tiptap-editor"
-              dangerouslySetInnerHTML={{ __html: editorData.html || '<p>Пустая статья</p>' }}
-            />
+            <div style={{ lineHeight: 1.35, fontSize: '1rem' }} className="tiptap-editor">
+              <div
+                className="tiptap"
+                dangerouslySetInnerHTML={{ __html: editorData.html || '<p>Пустая статья</p>' }}
+              />
+            </div>
           </div>
         </div>
       )}

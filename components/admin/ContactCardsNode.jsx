@@ -1,0 +1,403 @@
+'use client'
+
+import { Node, mergeAttributes } from '@tiptap/core'
+import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
+import { useState, useRef } from 'react'
+import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
+
+const AVATAR_SIZE = 48
+const AVATAR_COLORS = ['#e85d2a', '#6d5ce7', '#0ea574', '#d97706']
+
+/* Grid uses CSS class .contact-cards-grid for responsive columns */
+
+function parseTopics(topics) {
+  if (!topics) return []
+  return topics
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => l.replace(/^[-•*]\s*/, ''))
+}
+
+const inputStyle = {
+  width: '100%',
+  padding: '6px 8px',
+  fontSize: '0.8125rem',
+  fontFamily: 'var(--font-body)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '6px',
+  outline: 'none',
+  marginBottom: '6px',
+  boxSizing: 'border-box',
+}
+
+const textareaStyle = {
+  ...inputStyle,
+  resize: 'vertical',
+  minHeight: '48px',
+  lineHeight: 1.4,
+}
+
+const smallBtnStyle = {
+  padding: '4px 10px',
+  fontSize: '0.75rem',
+  fontFamily: 'var(--font-body)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '6px',
+  background: 'var(--color-surface)',
+  cursor: 'pointer',
+  color: 'var(--color-text-secondary)',
+}
+
+function emptyCard() {
+  return { name: '', topics: '', photo: null }
+}
+
+function getInitials(name) {
+  if (!name) return '?'
+  const cleaned = name.replace(/^@/, '')
+  const parts = cleaned.split(/[.\s_-]+/).filter(Boolean)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return cleaned.slice(0, 2).toUpperCase()
+}
+
+function getAvatarColor(name, idx) {
+  if (typeof idx === 'number') return AVATAR_COLORS[idx % AVATAR_COLORS.length]
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+function Avatar({ name, photo, size, onClick, uploading, color }) {
+  const avatarBase = {
+    width: size,
+    height: size,
+    minWidth: size,
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    cursor: onClick ? 'pointer' : 'default',
+    position: 'relative',
+    userSelect: 'none',
+  }
+
+  if (photo) {
+    return (
+      <div style={avatarBase} onClick={onClick} title={onClick ? 'Заменить фото' : undefined}>
+        <img src={photo} alt={name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {uploading && (
+          <div style={{
+            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontSize: '0.75rem',
+          }}>
+            ...
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        ...avatarBase,
+        background: color || getAvatarColor(name),
+        color: 'white',
+        fontWeight: 500,
+        fontSize: 14,
+      }}
+      onClick={onClick}
+      title={onClick ? 'Загрузить фото' : undefined}
+    >
+      {uploading ? '...' : getInitials(name)}
+    </div>
+  )
+}
+
+function ContactCardsView({ node, updateAttributes, deleteNode, selected }) {
+  const cards = node.attrs.cards || [emptyCard()]
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(cards)
+  const [uploadingIdx, setUploadingIdx] = useState(-1)
+  const fileRefs = useRef({})
+
+  function updateCard(idx, field, value) {
+    const next = draft.map((c, i) => (i === idx ? { ...c, [field]: value } : c))
+    setDraft(next)
+  }
+
+  function addCard() {
+    setDraft([...draft, emptyCard()])
+  }
+
+  function removeCard(idx) {
+    if (draft.length <= 1) return
+    setDraft(draft.filter((_, i) => i !== idx))
+  }
+
+  function save() {
+    updateAttributes({ cards: draft })
+    setEditing(false)
+  }
+
+  function cancel() {
+    setDraft(cards)
+    setEditing(false)
+  }
+
+  async function handleAvatarUpload(idx, e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingIdx(idx)
+    const url = await uploadImageToStorage(file)
+    setUploadingIdx(-1)
+    if (url) {
+      updateCard(idx, 'photo', url)
+    }
+  }
+
+  function triggerFileInput(idx) {
+    if (!fileRefs.current[idx]) {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      fileRefs.current[idx] = input
+    }
+    fileRefs.current[idx].onchange = (e) => handleAvatarUpload(idx, e)
+    fileRefs.current[idx].click()
+  }
+
+  if (editing) {
+    return (
+      <NodeViewWrapper data-contact-cards>
+        <div
+          style={{
+            border: '2px solid var(--color-accent)',
+            borderRadius: '12px',
+            padding: '16px',
+            margin: '16px 0',
+            background: 'var(--color-surface)',
+          }}
+          contentEditable={false}
+        >
+          <div style={{ fontWeight: 600, marginBottom: '12px', fontSize: '0.875rem' }}>
+            Редактирование контактов
+          </div>
+
+          <div className="contact-cards-grid">
+            {draft.map((card, idx) => (
+              <div
+                key={idx}
+                style={{
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  background: 'var(--color-bg)',
+                  position: 'relative',
+                }}
+              >
+                {draft.length > 1 && (
+                  <button
+                    type="button"
+                    style={{
+                      ...smallBtnStyle,
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      color: '#dc2626',
+                      borderColor: '#fca5a5',
+                      padding: '2px 7px',
+                      fontSize: '0.6875rem',
+                    }}
+                    onClick={() => removeCard(idx)}
+                    title="Удалить контакт"
+                  >
+                    ✕
+                  </button>
+                )}
+
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+                  <Avatar
+                    name={card.name}
+                    photo={card.photo}
+                    size={AVATAR_SIZE}
+                    color={getAvatarColor(card.name, idx)}
+                    onClick={() => triggerFileInput(idx)}
+                    uploading={uploadingIdx === idx}
+                  />
+                  <div style={{ flex: 1, paddingTop: '2px' }}>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
+                      Контакт {idx + 1}
+                    </div>
+                    <input
+                      style={inputStyle}
+                      placeholder="Name.Surname"
+                      value={card.name}
+                      onChange={(e) => updateCard(idx, 'name', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <textarea
+                  style={textareaStyle}
+                  placeholder="По каким вопросам обращаться (каждая строка — отдельный пункт, можно начинать с - или •)"
+                  value={card.topics}
+                  onChange={(e) => updateCard(idx, 'topics', e.target.value)}
+                  rows={3}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <button type="button" style={smallBtnStyle} onClick={addCard}>
+              + Добавить контакт
+            </button>
+            <div style={{ flex: 1 }} />
+            <button type="button" style={smallBtnStyle} onClick={cancel}>
+              Отмена
+            </button>
+            <button
+              type="button"
+              style={{
+                ...smallBtnStyle,
+                background: 'var(--color-accent)',
+                color: 'white',
+                borderColor: 'var(--color-accent)',
+              }}
+              onClick={save}
+            >
+              Сохранить
+            </button>
+          </div>
+        </div>
+      </NodeViewWrapper>
+    )
+  }
+
+  const hasContent = cards.some((c) => c.name || c.topics || c.photo)
+
+  return (
+    <NodeViewWrapper data-contact-cards>
+      <div
+        contentEditable={false}
+        style={{
+          position: 'relative',
+          outline: selected ? '2px solid var(--color-accent)' : 'none',
+          outlineOffset: '4px',
+          borderRadius: '12px',
+        }}
+      >
+        {!hasContent ? (
+          <div
+            onClick={() => setEditing(true)}
+            style={{
+              padding: '24px',
+              textAlign: 'center',
+              border: '2px dashed var(--color-border)',
+              borderRadius: '12px',
+              margin: '16px 0',
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+              fontSize: '0.875rem',
+            }}
+          >
+            Нажмите чтобы добавить контакты
+          </div>
+        ) : (
+          <div className="contact-cards-grid">
+            {cards.map((card, idx) => {
+              const topics = parseTopics(card.topics)
+              return (
+                <div key={idx} className="contact-card">
+                  {card.photo ? (
+                    <img
+                      src={card.photo}
+                      alt={card.name || ''}
+                      className="contact-card__photo"
+                    />
+                  ) : (
+                    <div
+                      className="contact-card__photo-placeholder"
+                      style={{ background: getAvatarColor(card.name, idx) }}
+                    >
+                      {getInitials(card.name)}
+                    </div>
+                  )}
+                  <div className="contact-card__body">
+                    {card.name && <div className="contact-card__name">{card.name}</div>}
+                    {topics.length > 0 && (
+                      <ul className="contact-card__topics">
+                        {topics.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {selected && (
+          <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+            <button type="button" style={smallBtnStyle} onClick={() => setEditing(true)}>
+              Редактировать
+            </button>
+            <button
+              type="button"
+              style={{ ...smallBtnStyle, color: '#dc2626' }}
+              onClick={() => deleteNode()}
+            >
+              Удалить блок
+            </button>
+          </div>
+        )}
+      </div>
+    </NodeViewWrapper>
+  )
+}
+
+export const ContactCards = Node.create({
+  name: 'contactCards',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      cards: {
+        default: [emptyCard(), emptyCard(), emptyCard()],
+        parseHTML: (el) => {
+          try {
+            return JSON.parse(el.getAttribute('data-cards') || '[]')
+          } catch {
+            return [emptyCard(), emptyCard(), emptyCard()]
+          }
+        },
+        renderHTML: (attrs) => ({
+          'data-cards': JSON.stringify(attrs.cards),
+        }),
+      },
+    }
+  },
+
+  parseHTML() {
+    return [{ tag: 'div[data-contact-cards]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes({ 'data-contact-cards': '' }, HTMLAttributes)]
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ContactCardsView)
+  },
+})

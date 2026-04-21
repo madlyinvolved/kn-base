@@ -1,11 +1,11 @@
 import Layout from '../../components/public/Layout.jsx'
-import ChatWidget from '../../components/public/ChatWidget/ChatWidget.jsx'
+// ChatWidget disabled. To restore: import ChatWidget and add {CHAT_ENABLED && <ChatWidget />} below.
+// import ChatWidget from '../../components/public/ChatWidget/ChatWidget.jsx'
 
 export default function PublicLayout({ children }) {
   return (
     <Layout>
       {children}
-      <ChatWidget />
     </Layout>
   )
 }
