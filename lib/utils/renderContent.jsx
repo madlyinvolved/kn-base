@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import Link from 'next/link'
+
+const HOTSPOT_COLORS = ['#e85d2a', '#6d5ce7', '#0ea574', '#d97706']
 
 /**
  * Parses article content (plain text with [[id|text]] syntax) and converts
@@ -186,12 +188,24 @@ function renderSimpleImage(attrs, key) {
 }
 
 function ImageWithHotspots({ attrs }) {
+  const [hoveredIdx, setHoveredIdx] = useState(null)
   const [activeIdx, setActiveIdx] = useState(null)
+  const containerRef = useRef(null)
 
   const align = attrs.align || 'center'
   const width = attrs.width || 100
   const wrap = attrs.wrap === true
   const hotspots = attrs.hotspots || []
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setActiveIdx(null)
+      }
+    }
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [])
 
   const figureStyle = {
     margin: '1em 0',
@@ -205,60 +219,61 @@ function ImageWithHotspots({ attrs }) {
     figureStyle.marginRight = align === 'left' ? '16px' : 0
   }
 
-  const imgStyle = {
-    width: '100%',
-    maxWidth: '100%',
-    height: 'auto',
-    borderRadius: '8px',
-    display: 'block',
-  }
-
-  const active = activeIdx !== null ? hotspots[activeIdx] : null
-
   return (
-    <>
-      <figure style={figureStyle}>
-        <div style={{ position: 'relative', display: 'inline-block', width: `${width}%`, maxWidth: '100%' }}>
-          <img src={attrs.src} alt={attrs.alt || attrs.caption || ''} style={imgStyle} />
-          {hotspots.map((h, idx) => (
-            <div
-              key={idx}
-              className="hotspot-dot"
-              style={{ left: `${h.x}%`, top: `${h.y}%` }}
-              onClick={() => setActiveIdx(activeIdx === idx ? null : idx)}
-            >
-              {idx + 1}
-            </div>
-          ))}
-        </div>
-        {attrs.caption && (
-          <figcaption
-            style={{
-              fontSize: '0.8125rem',
-              color: 'var(--color-text-secondary)',
-              fontStyle: 'italic',
-              textAlign: align,
-              marginTop: '6px',
-            }}
-          >
-            {attrs.caption}
-          </figcaption>
-        )}
-      </figure>
+    <figure ref={containerRef} style={figureStyle}>
+      <div style={{ position: 'relative', display: 'inline-block', width: `${width}%`, maxWidth: '100%' }}>
+        <img
+          src={attrs.src}
+          alt={attrs.alt || attrs.caption || ''}
+          style={{ width: '100%', maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block' }}
+        />
+        {hotspots.map((h, idx) => {
+          const color = HOTSPOT_COLORS[idx % HOTSPOT_COLORS.length]
+          const visible = hoveredIdx === idx || activeIdx === idx
+          const flipLeft = h.x > 60
 
-      <div className={`hotspot-panel ${active ? 'hotspot-panel--active' : ''}`}>
-        {active && (
-          <>
-            <button className="hotspot-panel__close" onClick={() => setActiveIdx(null)}>
-              ✕
-            </button>
-            <div className="hotspot-panel__number">{activeIdx + 1}</div>
-            {active.title && <div className="hotspot-panel__title">{active.title}</div>}
-            {active.description && <div className="hotspot-panel__desc">{active.description}</div>}
-          </>
-        )}
+          return (
+            <Fragment key={idx}>
+              <div
+                className="hotspot-dot"
+                style={{ left: `${h.x}%`, top: `${h.y}%`, background: color }}
+                onMouseEnter={() => setHoveredIdx(idx)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                onClick={() => setActiveIdx(activeIdx === idx ? null : idx)}
+              >
+                {idx + 1}
+              </div>
+              {(h.title || h.description) && (
+                <div
+                  className={`hotspot-tooltip${flipLeft ? ' hotspot-tooltip--flip' : ''}`}
+                  style={{
+                    '--hs-x': `${h.x}%`,
+                    '--hs-y': `${h.y}%`,
+                    opacity: visible ? 1 : 0,
+                  }}
+                >
+                  {h.title && <div className="hotspot-tooltip__title">{h.title}</div>}
+                  {h.description && <div className="hotspot-tooltip__desc">{h.description}</div>}
+                </div>
+              )}
+            </Fragment>
+          )
+        })}
       </div>
-    </>
+      {attrs.caption && (
+        <figcaption
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--color-text-secondary)',
+            fontStyle: 'italic',
+            textAlign: align,
+            marginTop: '6px',
+          }}
+        >
+          {attrs.caption}
+        </figcaption>
+      )}
+    </figure>
   )
 }
 

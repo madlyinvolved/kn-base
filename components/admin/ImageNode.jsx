@@ -216,41 +216,22 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
           </div>
         ))}
 
-        {/* Hotspot mode overlay bar */}
+        {/* Hotspot mode hint */}
         {hsMode && (
           <div
             style={{
               position: 'absolute',
               bottom: '8px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: '6px',
-              padding: '6px 12px',
-              background: 'rgba(0,0,0,0.75)',
-              borderRadius: '8px',
+              left: '8px',
+              padding: '4px 10px',
+              background: 'rgba(0,0,0,0.7)',
+              borderRadius: '6px',
               zIndex: 20,
-              fontSize: '0.75rem',
+              fontSize: '11px',
               color: 'white',
-              alignItems: 'center',
             }}
           >
-            <span>Кликните на фото чтобы добавить точку</span>
-            <button
-              type="button"
-              style={{
-                background: 'var(--color-accent)',
-                border: 'none',
-                color: 'white',
-                padding: '4px 12px',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-              }}
-              onClick={(e) => { e.stopPropagation(); setHsMode(false); setEditIdx(null) }}
-            >
-              Готово
-            </button>
+            Кликните на фото чтобы добавить точку
           </div>
         )}
 
@@ -350,47 +331,103 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
         {caption || ''}
       </figcaption>
 
-      {/* Hotspot edit panel */}
-      {hsMode && editIdx !== null && hotspots[editIdx] && (
+      {/* Hotspot edit panel — below image */}
+      {hsMode && (
         <div
           contentEditable={false}
           style={{
-            position: 'absolute',
-            top: 0,
-            right: '-300px',
-            width: '280px',
             background: 'var(--color-surface)',
-            borderLeft: '2px solid var(--color-accent)',
-            borderRadius: '0 12px 12px 0',
-            padding: '16px',
-            boxShadow: 'var(--shadow-md)',
-            zIndex: 25,
+            border: '1px solid var(--color-border)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginTop: '8px',
             fontSize: '0.875rem',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div className="hotspot-panel__number">{editIdx + 1}</div>
+          {/* Tab row */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: hotspots.length > 0 ? '12px' : 0 }}>
+            {hotspots.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setEditIdx(editIdx === idx ? null : idx)}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  border: editIdx === idx ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                  background: editIdx === idx ? 'var(--color-accent)' : 'var(--color-surface)',
+                  color: editIdx === idx ? 'white' : 'var(--color-text)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <div style={{ flex: 1 }} />
             <button
               type="button"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', fontSize: '16px' }}
-              onClick={() => setEditIdx(null)}
+              onClick={() => { setHsMode(false); setEditIdx(null) }}
+              style={{
+                background: 'var(--color-accent)',
+                border: 'none',
+                color: 'white',
+                padding: '5px 14px',
+                borderRadius: '6px',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
             >
-              ✕
+              Готово
             </button>
           </div>
-          <input
-            style={hsInputStyle}
-            placeholder="Заголовок"
-            value={hotspots[editIdx].title}
-            onChange={(e) => hsEditField(editIdx, 'title', e.target.value)}
-          />
-          <textarea
-            style={{ ...hsInputStyle, resize: 'vertical', minHeight: '60px', lineHeight: 1.4 }}
-            placeholder="Описание"
-            value={hotspots[editIdx].description}
-            onChange={(e) => hsEditField(editIdx, 'description', e.target.value)}
-            rows={3}
-          />
+
+          {/* Active hotspot fields */}
+          {editIdx !== null && hotspots[editIdx] && (
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <div className="hotspot-panel__number">{editIdx + 1}</div>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                  Точка {editIdx + 1}
+                </span>
+              </div>
+              <input
+                style={hsInputStyle}
+                placeholder="Заголовок"
+                value={hotspots[editIdx].title}
+                onChange={(e) => hsEditField(editIdx, 'title', e.target.value)}
+              />
+              <textarea
+                style={{ ...hsInputStyle, resize: 'vertical', minHeight: '60px', lineHeight: 1.4 }}
+                placeholder="Описание"
+                value={hotspots[editIdx].description}
+                onChange={(e) => hsEditField(editIdx, 'description', e.target.value)}
+                rows={3}
+              />
+              <button
+                type="button"
+                onClick={() => hsRemove(editIdx)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#e53e3e',
+                  fontSize: '0.8125rem',
+                  cursor: 'pointer',
+                  padding: '4px 0',
+                  marginTop: '2px',
+                }}
+              >
+                Удалить точку
+              </button>
+            </div>
+          )}
         </div>
       )}
     </NodeViewWrapper>
