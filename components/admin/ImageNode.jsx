@@ -50,6 +50,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     outline: selected ? '2px solid var(--color-accent)' : 'none',
     outlineOffset: '2px',
     cursor: 'default',
+    background: 'transparent',
   }
 
   async function handleReplace(e) {

@@ -165,6 +165,7 @@ function renderSimpleImage(attrs, key) {
     height: 'auto',
     borderRadius: '8px',
     display: 'inline-block',
+    background: 'transparent',
   }
 
   return (
@@ -256,7 +257,7 @@ function ImageWithHotspots({ attrs }) {
         <img
           src={attrs.src}
           alt={attrs.alt || attrs.caption || ''}
-          style={{ width: '100%', maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block' }}
+          style={{ width: '100%', maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block', background: 'transparent' }}
         />
         {hotspots.map((h, idx) => {
           const color = HOTSPOT_COLORS[idx % HOTSPOT_COLORS.length]
