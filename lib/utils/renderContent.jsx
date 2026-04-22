@@ -190,12 +190,21 @@ function renderSimpleImage(attrs, key) {
 function ImageWithHotspots({ attrs }) {
   const [hoveredIdx, setHoveredIdx] = useState(null)
   const [activeIdx, setActiveIdx] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef(null)
 
   const align = attrs.align || 'center'
   const width = attrs.width || 100
   const wrap = attrs.wrap === true
   const hotspots = attrs.hotspots || []
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     function onDocClick(e) {
@@ -219,6 +228,37 @@ function ImageWithHotspots({ attrs }) {
     figureStyle.marginRight = align === 'left' ? '16px' : 0
   }
 
+  function getTooltipStyle(h) {
+    // Mobile: always below the dot, centered
+    if (isMobile) {
+      return {
+        position: 'absolute',
+        left: `${h.x}%`,
+        top: `calc(${h.y}% + 14px)`,
+        transform: 'translateX(-50%)',
+        zIndex: 20,
+      }
+    }
+    // Desktop: left half → right of dot; right half → left of dot
+    // Top quarter → below dot; otherwise → vertically centered
+    const toLeft = h.x > 50
+    const toBottom = h.y < 25
+    const style = { position: 'absolute', zIndex: 20 }
+
+    if (toLeft) {
+      style.left = `${h.x}%`
+      style.transform = toBottom
+        ? 'translateX(calc(-100% - 14px))'
+        : 'translateX(calc(-100% - 14px)) translateY(-50%)'
+    } else {
+      style.left = `calc(${h.x}% + 14px)`
+      if (!toBottom) style.transform = 'translateY(-50%)'
+    }
+    style.top = toBottom ? `calc(${h.y}% + 14px)` : `${h.y}%`
+
+    return style
+  }
+
   return (
     <figure ref={containerRef} style={figureStyle}>
       <div style={{ position: 'relative', display: 'inline-block', width: `${width}%`, maxWidth: '100%' }}>
@@ -230,7 +270,6 @@ function ImageWithHotspots({ attrs }) {
         {hotspots.map((h, idx) => {
           const color = HOTSPOT_COLORS[idx % HOTSPOT_COLORS.length]
           const visible = hoveredIdx === idx || activeIdx === idx
-          const flipLeft = h.x > 60
 
           return (
             <Fragment key={idx}>
@@ -243,15 +282,8 @@ function ImageWithHotspots({ attrs }) {
               >
                 {idx + 1}
               </div>
-              {(h.title || h.description) && (
-                <div
-                  className={`hotspot-tooltip${flipLeft ? ' hotspot-tooltip--flip' : ''}`}
-                  style={{
-                    '--hs-x': `${h.x}%`,
-                    '--hs-y': `${h.y}%`,
-                    opacity: visible ? 1 : 0,
-                  }}
-                >
+              {(h.title || h.description) && visible && (
+                <div className="hotspot-tooltip" style={getTooltipStyle(h)}>
                   {h.title && <div className="hotspot-tooltip__title">{h.title}</div>}
                   {h.description && <div className="hotspot-tooltip__desc">{h.description}</div>}
                 </div>
