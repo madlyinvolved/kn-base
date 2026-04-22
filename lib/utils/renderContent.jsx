@@ -229,29 +229,22 @@ function ImageWithHotspots({ attrs }) {
   }
 
   function getTooltipStyle(h) {
-    // Mobile: always below the dot, centered
+    const style = { position: 'absolute', zIndex: 20, top: `${h.y}%` }
+
     if (isMobile) {
-      return {
-        position: 'absolute',
-        left: `${h.x}%`,
-        top: `calc(${h.y}% + 14px)`,
-        transform: 'translateX(-50%)',
-        zIndex: 20,
-      }
+      style.left = `${h.x}%`
+      style.top = `calc(${h.y}% + 28px)`
+      style.transform = 'translateX(-50%)'
+      return style
     }
-    // Desktop: left half (x < 50%) → RIGHT of dot; right half (x >= 50%) → LEFT of dot
-    // Near top (y < 25%) → below dot; otherwise → vertically centered on dot
-    const rightHalf = h.x >= 50
-    const nearTop = h.y < 25
-    const style = { position: 'absolute', zIndex: 20 }
 
-    style.left = rightHalf ? `${h.x}%` : `calc(${h.x}% + 14px)`
-    style.top = nearTop ? `calc(${h.y}% + 14px)` : `${h.y}%`
-
-    const tx = rightHalf ? 'translateX(calc(-100% - 14px))' : ''
-    const ty = nearTop ? '' : 'translateY(-50%)'
-    const transforms = [tx, ty].filter(Boolean).join(' ')
-    if (transforms) style.transform = transforms
+    // Left half → tooltip opens LEFT (right edge touches dot)
+    // Right half → tooltip opens RIGHT (left edge touches dot)
+    if (h.x < 50) {
+      style.right = `calc(100% - ${h.x}% + 28px)`
+    } else {
+      style.left = `calc(${h.x}% + 28px)`
+    }
 
     return style
   }
