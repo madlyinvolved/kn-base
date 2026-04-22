@@ -245,6 +245,7 @@ function ImageWithHotspots({ attrs }) {
     } else {
       style.left = `calc(${h.x}% + 28px)`
     }
+    style.transform = 'translateY(-50%)'
 
     return style
   }
