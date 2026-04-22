@@ -239,22 +239,19 @@ function ImageWithHotspots({ attrs }) {
         zIndex: 20,
       }
     }
-    // Desktop: left half → right of dot; right half → left of dot
-    // Top quarter → below dot; otherwise → vertically centered
-    const toLeft = h.x > 50
-    const toBottom = h.y < 25
+    // Desktop: left half (x < 50%) → RIGHT of dot; right half (x >= 50%) → LEFT of dot
+    // Near top (y < 25%) → below dot; otherwise → vertically centered on dot
+    const rightHalf = h.x >= 50
+    const nearTop = h.y < 25
     const style = { position: 'absolute', zIndex: 20 }
 
-    if (toLeft) {
-      style.left = `${h.x}%`
-      style.transform = toBottom
-        ? 'translateX(calc(-100% - 14px))'
-        : 'translateX(calc(-100% - 14px)) translateY(-50%)'
-    } else {
-      style.left = `calc(${h.x}% + 14px)`
-      if (!toBottom) style.transform = 'translateY(-50%)'
-    }
-    style.top = toBottom ? `calc(${h.y}% + 14px)` : `${h.y}%`
+    style.left = rightHalf ? `${h.x}%` : `calc(${h.x}% + 14px)`
+    style.top = nearTop ? `calc(${h.y}% + 14px)` : `${h.y}%`
+
+    const tx = rightHalf ? 'translateX(calc(-100% - 14px))' : ''
+    const ty = nearTop ? '' : 'translateY(-50%)'
+    const transforms = [tx, ty].filter(Boolean).join(' ')
+    if (transforms) style.transform = transforms
 
     return style
   }
