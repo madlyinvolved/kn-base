@@ -253,11 +253,11 @@ function ImageWithHotspots({ attrs }) {
 
   return (
     <figure ref={containerRef} style={figureStyle}>
-      <div style={{ position: 'relative', display: 'inline-block', width: `${width}%`, maxWidth: '100%' }}>
+      <div style={{ position: 'relative', display: 'inline-block', width: `${width}%`, maxWidth: '100%', padding: 0, border: 0, lineHeight: 0, fontSize: 0 }}>
         <img
           src={attrs.src}
           alt={attrs.alt || attrs.caption || ''}
-          style={{ width: '100%', maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block', background: 'transparent' }}
+          style={{ width: '100%', maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block', background: 'transparent', margin: 0, padding: 0, border: 0 }}
         />
         {hotspots.map((h, idx) => {
           const color = HOTSPOT_COLORS[idx % HOTSPOT_COLORS.length]

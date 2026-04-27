@@ -341,7 +341,9 @@ input:focus:not(:focus-visible) {
 
 .tiptap-editor .tiptap figure img,
 .tiptap-editor .tiptap [data-image-node] img {
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
 }
 
 .tiptap-editor .tiptap table,

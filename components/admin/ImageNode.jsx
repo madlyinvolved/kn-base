@@ -51,6 +51,9 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     outlineOffset: '2px',
     cursor: 'default',
     background: 'transparent',
+    margin: 0,
+    padding: 0,
+    border: 0,
   }
 
   async function handleReplace(e) {
@@ -184,7 +187,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     <NodeViewWrapper as="figure" style={figureAlign} data-image-node draggable={false}>
       <div
         ref={imgContainerRef}
-        style={{ position: 'relative', display: 'inline-block', width: `${width || 100}%`, maxWidth: '100%' }}
+        style={{ position: 'relative', display: 'inline-block', width: `${width || 100}%`, maxWidth: '100%', padding: 0, border: 0, lineHeight: 0, fontSize: 0 }}
         contentEditable={false}
       >
         <img
