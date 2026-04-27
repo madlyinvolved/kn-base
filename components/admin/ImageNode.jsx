@@ -42,11 +42,11 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
   }
 
   const imgStyle = {
-    width: `${width || 100}%`,
+    width: '100%',
     maxWidth: '100%',
     height: 'auto',
     borderRadius: '8px',
-    display: 'inline-block',
+    display: 'block',
     outline: selected ? '2px solid var(--color-accent)' : 'none',
     outlineOffset: '2px',
     cursor: 'default',
@@ -184,7 +184,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
     <NodeViewWrapper as="figure" style={figureAlign} data-image-node draggable={false}>
       <div
         ref={imgContainerRef}
-        style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}
+        style={{ position: 'relative', display: 'inline-block', width: `${width || 100}%`, maxWidth: '100%' }}
         contentEditable={false}
       >
         <img

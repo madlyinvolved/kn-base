@@ -339,6 +339,11 @@ input:focus:not(:focus-visible) {
   background: transparent;
 }
 
+.tiptap-editor .tiptap figure img,
+.tiptap-editor .tiptap [data-image-node] img {
+  margin: 0;
+}
+
 .tiptap-editor .tiptap table,
 .tiptap-editor table {
   border-collapse: collapse;
