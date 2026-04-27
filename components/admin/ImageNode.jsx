@@ -29,6 +29,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
   const [editIdx, setEditIdx] = useState(null)
   const [dragIdx, setDragIdx] = useState(null)
   const imgContainerRef = useRef(null)
+  const imgRef = useRef(null)
 
   const figureAlign = {
     margin: '1em 0',
@@ -133,10 +134,11 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
   }
 
   function hsAdd(e) {
-    if (!hsMode) return
-    const rect = e.currentTarget.getBoundingClientRect()
+    if (!hsMode || !imgRef.current) return
+    const rect = imgRef.current.getBoundingClientRect()
     const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10
     const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10
+    if (x < 0 || x > 100 || y < 0 || y > 100) return
     const next = [...hotspots, { x, y, title: '', description: '' }]
     hsUpdate(next)
     setEditIdx(next.length - 1)
@@ -162,9 +164,9 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
   useEffect(() => {
     if (dragIdx === null) return
     function onMove(e) {
-      const container = imgContainerRef.current
-      if (!container) return
-      const rect = container.getBoundingClientRect()
+      const img = imgRef.current
+      if (!img) return
+      const rect = img.getBoundingClientRect()
       const x = Math.min(100, Math.max(0, Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10))
       const y = Math.min(100, Math.max(0, Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10))
       const next = hotspots.map((h, i) => (i === dragIdx ? { ...h, x, y } : h))
@@ -191,6 +193,7 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
         contentEditable={false}
       >
         <img
+          ref={imgRef}
           src={src}
           alt={alt || caption || ''}
           style={cursorStyle}
