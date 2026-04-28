@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect, Fragment } from 'react'
 import Link from 'next/link'
 
-const HOTSPOT_COLORS = ['#e85d2a', '#6d5ce7', '#0ea574', '#d97706']
-
 /**
  * Parses article content (plain text with [[id|text]] syntax) and converts
  * the special links to clickable spans. Returns an array of strings and React elements.
@@ -260,20 +258,17 @@ function ImageWithHotspots({ attrs }) {
           style={{ width: '100%', maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block', background: 'transparent', margin: 0, padding: 0, border: 0 }}
         />
         {hotspots.map((h, idx) => {
-          const color = HOTSPOT_COLORS[idx % HOTSPOT_COLORS.length]
           const visible = hoveredIdx === idx || activeIdx === idx
 
           return (
             <Fragment key={idx}>
               <div
                 className="hotspot-dot"
-                style={{ left: `${h.x}%`, top: `${h.y}%`, background: color }}
+                style={{ left: `${h.x}%`, top: `${h.y}%` }}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
                 onClick={() => setActiveIdx(activeIdx === idx ? null : idx)}
-              >
-                {idx + 1}
-              </div>
+              />
               {(h.title || h.description) && visible && (
                 <div className="hotspot-tooltip" style={getTooltipStyle(h)}>
                   {h.title && <div className="hotspot-tooltip__title">{h.title}</div>}

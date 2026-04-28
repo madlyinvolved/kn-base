@@ -206,11 +206,10 @@ function ImageNodeView({ node, updateAttributes, deleteNode, selected, editor })
           <div
             key={idx}
             className="hotspot-dot"
-            style={{ left: `${h.x}%`, top: `${h.y}%`, cursor: hsMode ? 'grab' : 'default', animation: hsMode ? 'none' : undefined }}
+            style={{ left: `${h.x}%`, top: `${h.y}%`, cursor: hsMode ? 'grab' : 'default' }}
             onMouseDown={hsMode ? (e) => handleDragStart(idx, e) : undefined}
             onClick={(e) => { e.stopPropagation(); if (hsMode) setEditIdx(idx) }}
           >
-            {idx + 1}
             {hsMode && (
               <button
                 type="button"
