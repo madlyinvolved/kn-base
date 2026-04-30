@@ -2,18 +2,55 @@
 
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
-import { useState, useCallback } from 'react'
+import { useState, useRef } from 'react'
+import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
-const CARD_COLORS = {
-  gray: { bg: '#f3f4f6', text: '#374151' },
-  orange: { bg: '#fff7ed', text: '#9a3412' },
-  green: { bg: '#ecfdf5', text: '#065f46' },
-  purple: { bg: '#f5f3ff', text: '#5b21b6' },
-  pink: { bg: '#fdf2f8', text: '#9d174d' },
-  teal: { bg: '#f0fdfa', text: '#115e59' },
+const PALETTE = {
+  coral:  { bg: '#fff1ee', solid: '#e85d2a', text: '#9a3412' },
+  teal:   { bg: '#f0fdfa', solid: '#0d9488', text: '#115e59' },
+  purple: { bg: '#f5f3ff', solid: '#7c3aed', text: '#5b21b6' },
+  pink:   { bg: '#fdf2f8', solid: '#db2777', text: '#9d174d' },
+  blue:   { bg: '#eff6ff', solid: '#2563eb', text: '#1e40af' },
+  amber:  { bg: '#fffbeb', solid: '#d97706', text: '#92400e' },
+}
+const PALETTE_NAMES = Object.keys(PALETTE)
+
+const ICONS = {
+  server:   '<rect x="4" y="2" width="16" height="8" rx="2"/><rect x="4" y="14" width="16" height="8" rx="2"/><circle cx="8" cy="6" r="1"/><circle cx="8" cy="18" r="1"/>',
+  monitor:  '<rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5"/>',
+  user:     '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  target:   '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  chart:    '<path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-5"/>',
+  gear:     '<circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>',
+  bolt:     '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  shield:   '<path d="M12 2l7 4v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-4z"/>',
+  code:     '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  cloud:    '<path d="M18 10a5 5 0 0 0-9.58-1.5A4 4 0 1 0 5 16h13a3 3 0 0 0 0-6z"/>',
+  lock:     '<rect x="5" y="11" width="14" height="11" rx="2"/><path d="M12 3a4 4 0 0 0-4 4v4h8V7a4 4 0 0 0-4-4z"/>',
+  globe:    '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 5v6c0 1.66-4.03 3-9 3S3 12.66 3 11V5"/><path d="M21 11v6c0 1.66-4.03 3-9 3s-9-1.34-9-3v-6"/>',
+  star:     '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+}
+const ICON_NAMES = Object.keys(ICONS)
+
+function SvgIcon({ name, size = 24, color = 'currentColor' }) {
+  const d = ICONS[name]
+  if (!d) return null
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: d }} />
+  )
 }
 
-const COLOR_NAMES = Object.keys(CARD_COLORS)
+export function SvgIconPreview({ name, size = 16, color = 'currentColor' }) {
+  return <SvgIcon name={name} size={size} color={color} />
+}
+
+const CARD_STYLES = [
+  { value: 'icon', label: 'Иконка' },
+  { value: 'pill', label: 'Пилл' },
+  { value: 'stripe', label: 'Полоска' },
+  { value: 'image', label: 'С картинкой' },
+]
 
 const ARROWS = ['↓', '↑', '→', '←', '↔', '↕']
 
@@ -22,7 +59,7 @@ function uid() {
 }
 
 function emptyCard() {
-  return { id: uid(), type: 'card', text: '', subtext: '', color: 'gray', icon: '' }
+  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', color: 'coral', svgIcon: 'server', imageUrl: '' }
 }
 
 function emptySection() {
@@ -71,17 +108,125 @@ const deleteBtn = {
   fontSize: '0.6875rem',
 }
 
+const selectStyle = {
+  ...inputStyle,
+  width: 'auto',
+  padding: '3px 6px',
+  fontSize: '0.75rem',
+  cursor: 'pointer',
+  background: 'var(--color-surface)',
+}
+
+function ColorPicker({ value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+      {PALETTE_NAMES.map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => onChange(c)}
+          style={{
+            width: 18,
+            height: 18,
+            borderRadius: '50%',
+            border: value === c ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+            background: PALETTE[c].solid,
+            cursor: 'pointer',
+            padding: 0,
+          }}
+          title={c}
+        />
+      ))}
+    </div>
+  )
+}
+
+function IconPicker({ value, onChange, color }) {
+  const pal = PALETTE[color] || PALETTE.coral
+  return (
+    <div style={{ display: 'flex', gap: '3px', marginTop: '4px', flexWrap: 'wrap' }}>
+      {ICON_NAMES.map((name) => (
+        <button
+          key={name}
+          type="button"
+          onClick={() => onChange(name)}
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: '6px',
+            border: value === name ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+            background: value === name ? pal.bg : 'var(--color-surface)',
+            cursor: 'pointer',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          title={name}
+        >
+          <SvgIcon name={name} size={14} color={value === name ? pal.solid : 'var(--color-text-secondary)'} />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ImageUploader({ imageUrl, onChange }) {
+  const ref = useRef(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const url = await uploadImageToStorage(file)
+    setUploading(false)
+    if (url) onChange(url)
+  }
+
+  return (
+    <div
+      onClick={() => ref.current?.click()}
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: '6px',
+        border: '1px dashed var(--color-border)',
+        background: imageUrl ? 'transparent' : 'var(--color-bg)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}
+    >
+      {uploading ? (
+        <span style={{ fontSize: '0.625rem', color: 'var(--color-text-secondary)' }}>...</span>
+      ) : imageUrl ? (
+        <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1 }}>+</span>
+      )}
+      <input ref={ref} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
+    </div>
+  )
+}
+
 function CardEditor({ card, onChange, onRemove }) {
   function set(field, value) {
     onChange({ ...card, [field]: value })
   }
+
+  const pal = PALETTE[card.color] || PALETTE.coral
+  const st = card.style || 'icon'
 
   return (
     <div
       style={{
         padding: '8px 12px',
         borderRadius: '8px',
-        background: CARD_COLORS[card.color]?.bg || CARD_COLORS.gray.bg,
+        background: pal.bg,
         border: '1px solid var(--color-border)',
         position: 'relative',
       }}
@@ -89,46 +234,48 @@ function CardEditor({ card, onChange, onRemove }) {
       <button type="button" style={{ ...deleteBtn, position: 'absolute', top: 4, right: 4 }} onClick={onRemove}>
         ✕
       </button>
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', alignItems: 'center' }}>
+
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'center' }}>
+        <select style={selectStyle} value={st} onChange={(e) => set('style', e.target.value)}>
+          {CARD_STYLES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+      </div>
+
+      {st === 'image' && (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+          <ImageUploader imageUrl={card.imageUrl} onChange={(url) => set('imageUrl', url)} />
+          <input
+            style={{ ...inputStyle, flex: 1, fontWeight: 600 }}
+            value={card.text}
+            onChange={(e) => set('text', e.target.value)}
+            placeholder="Текст"
+          />
+        </div>
+      )}
+
+      {st !== 'image' && (
         <input
-          style={{ ...inputStyle, width: '36px', textAlign: 'center', padding: '4px', fontSize: '1rem' }}
-          value={card.icon || ''}
-          onChange={(e) => set('icon', e.target.value)}
-          placeholder="😀"
-          title="Иконка"
-        />
-        <input
-          style={{ ...inputStyle, flex: 1, fontWeight: 600 }}
+          style={{ ...inputStyle, fontWeight: 600, marginBottom: '4px' }}
           value={card.text}
           onChange={(e) => set('text', e.target.value)}
-          placeholder="Текст карточки"
+          placeholder="Текст"
         />
-      </div>
-      <input
-        style={{ ...inputStyle, fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}
-        value={card.subtext}
-        onChange={(e) => set('subtext', e.target.value)}
-        placeholder="Подтекст (описание)"
-      />
-      <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-        {COLOR_NAMES.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => set('color', c)}
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              border: card.color === c ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-              background: CARD_COLORS[c].bg,
-              cursor: 'pointer',
-              padding: 0,
-            }}
-            title={c}
-          />
-        ))}
-      </div>
+      )}
+
+      {(st === 'stripe' || st === 'image') && (
+        <input
+          style={{ ...inputStyle, fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}
+          value={card.subtext}
+          onChange={(e) => set('subtext', e.target.value)}
+          placeholder="Подтекст"
+        />
+      )}
+
+      {st === 'icon' && (
+        <IconPicker value={card.svgIcon || 'server'} onChange={(v) => set('svgIcon', v)} color={card.color} />
+      )}
+
+      <ColorPicker value={card.color} onChange={(v) => set('color', v)} />
     </div>
   )
 }
@@ -188,7 +335,7 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
           type="button"
           style={isHorizontal ? { ...smallBtn, background: '#e0e7ff', borderColor: '#818cf8' } : smallBtn}
           onClick={() => setField('layout', isHorizontal ? 'vertical' : 'horizontal')}
-          title={isHorizontal ? 'Переключить на вертикальный' : 'Переключить на горизонтальный'}
+          title={isHorizontal ? 'Вертикальный' : 'Горизонтальный'}
         >
           {isHorizontal ? '⇔' : '⇕'}
         </button>
@@ -207,10 +354,10 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
           <div key={child.id || idx} style={{ flex: isHorizontal ? '1 1 0' : undefined, minWidth: isHorizontal ? '140px' : undefined, position: 'relative' }}>
             {section.children.length > 1 && (
               <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
-                <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)} title="Переместить">
+                <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>
                   {isHorizontal ? '←' : '↑'}
                 </button>
-                <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)} title="Переместить">
+                <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)}>
                   {isHorizontal ? '→' : '↓'}
                 </button>
               </div>
@@ -346,6 +493,8 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
   )
 }
 
+/* ===== Preview (portal + editor preview mode) ===== */
+
 export function SchemaPreview({ elements }) {
   if (!elements?.length) return null
 
@@ -378,11 +527,52 @@ function SectionPreview({ section }) {
 }
 
 function CardPreview({ card }) {
-  const colors = CARD_COLORS[card.color] || CARD_COLORS.gray
+  const st = card.style || 'icon'
+  const pal = PALETTE[card.color] || PALETTE.coral
+
+  if (st === 'pill') {
+    return (
+      <div className="block-schema__card block-schema__card--pill">
+        <span className="block-schema__pill-dot" style={{ background: pal.solid }} />
+        {card.text && <span className="block-schema__card-text">{card.text}</span>}
+      </div>
+    )
+  }
+
+  if (st === 'stripe') {
+    return (
+      <div className="block-schema__card block-schema__card--stripe" style={{ borderLeftColor: pal.solid }}>
+        <div>
+          {card.text && <div className="block-schema__card-text">{card.text}</div>}
+          {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
+        </div>
+      </div>
+    )
+  }
+
+  if (st === 'image') {
+    return (
+      <div className="block-schema__card block-schema__card--image">
+        <div className="block-schema__card-img">
+          {card.imageUrl ? (
+            <img src={card.imageUrl} alt="" />
+          ) : (
+            <span className="block-schema__card-img-empty">+</span>
+          )}
+        </div>
+        <div>
+          {card.text && <div className="block-schema__card-text">{card.text}</div>}
+          {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="block-schema__card" style={{ background: colors.bg, color: colors.text }}>
-      {card.icon && <span className="block-schema__card-icon">{card.icon}</span>}
+    <div className="block-schema__card block-schema__card--icon" style={{ background: pal.bg, color: pal.text }}>
+      <div className="block-schema__icon-box" style={{ background: pal.solid }}>
+        <SvgIcon name={card.svgIcon || 'server'} size={16} color="white" />
+      </div>
       <div>
         {card.text && <div className="block-schema__card-text">{card.text}</div>}
         {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
@@ -394,6 +584,8 @@ function CardPreview({ card }) {
 function ArrowPreview({ arrow }) {
   return <div className="block-schema__arrow">{arrow.direction || '↓'}</div>
 }
+
+/* ===== TipTap Extension ===== */
 
 export const BlockSchema = Node.create({
   name: 'blockSchema',
