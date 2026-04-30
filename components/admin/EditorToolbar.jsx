@@ -185,6 +185,7 @@ export default function EditorToolbar({ editor }) {
         {/* Group 5: Table, contacts */}
         {btn('Таблица', () => setShowTableDialog(true), false, 'Вставить таблицу')}
         {btn('Контакты', () => editor.chain().focus().insertContent({ type: 'contactCards' }).run(), false, 'Карточка контактов')}
+        {btn('Схема', () => editor.chain().focus().insertContent({ type: 'blockSchema' }).run(), false, 'Вставить блок-схему')}
       </div>
 
       {showLinkInput && (
