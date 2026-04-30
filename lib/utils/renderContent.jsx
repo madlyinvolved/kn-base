@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { SchemaPreview } from '../../components/admin/BlockSchemaNode.jsx'
 
 /**
  * Parses article content (plain text with [[id|text]] syntax) and converts
@@ -125,6 +126,8 @@ function renderNode(node, key) {
       return <th key={key}>{children}</th>
     case 'contactCards':
       return renderContactCards(node, key)
+    case 'blockSchema':
+      return <SchemaPreview key={key} elements={node.attrs?.data?.elements || []} />
     case 'text':
       return renderTextNode(node, key)
     default:

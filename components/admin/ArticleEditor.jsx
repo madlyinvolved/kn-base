@@ -10,6 +10,7 @@ import { Placeholder } from '@tiptap/extension-placeholder'
 import EditorToolbar from './EditorToolbar.jsx'
 import { CustomImage } from './ImageNode.jsx'
 import { ContactCards } from './ContactCardsNode.jsx'
+import { BlockSchema } from './BlockSchemaNode.jsx'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 import { useState } from 'react'
 
@@ -87,6 +88,7 @@ export default function ArticleEditor({ content, onUpdate, saveStatus }) {
       Youtube.configure({ width: 640, height: 360 }),
       Placeholder.configure({ placeholder: 'Начните писать статью...' }),
       ContactCards,
+      BlockSchema,
     ],
     content: content || '',
     editorProps: {
