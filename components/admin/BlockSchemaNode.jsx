@@ -72,7 +72,7 @@ function uid() {
 }
 
 function emptyCard() {
-  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', color: 'coral', svgIcon: 'server', imageUrl: '', width: 'auto' }
+  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', color: 'coral', svgIcon: 'server', imageUrl: '', width: 'auto', filled: false }
 }
 
 function emptySection() {
@@ -316,20 +316,23 @@ function CardEditor({ card, onChange, onRemove, onAddArrowAfter }) {
         />
       )}
 
-      {(st === 'stripe' || st === 'image') && (
-        <input
-          style={{ ...inputStyle, fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}
-          value={card.subtext}
-          onChange={(e) => set('subtext', e.target.value)}
-          placeholder="Подтекст"
-        />
-      )}
+      <input
+        style={{ ...inputStyle, fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}
+        value={card.subtext}
+        onChange={(e) => set('subtext', e.target.value)}
+        placeholder="Подтекст"
+      />
 
       {st === 'icon' && (
         <IconPicker value={card.svgIcon || 'server'} onChange={(v) => set('svgIcon', v)} color={card.color} />
       )}
 
       <ColorPicker value={card.color} onChange={(v) => set('color', v)} />
+
+      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '0.75rem', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+        <input type="checkbox" checked={!!card.filled} onChange={(e) => set('filled', e.target.checked)} />
+        Залить цветом
+      </label>
 
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
         <button type="button" style={{ ...smallBtn, padding: '1px 8px', fontSize: '0.6875rem' }} onClick={onAddArrowAfter} title="Добавить стрелку после">
@@ -496,6 +499,10 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
     setElements([...data.elements, emptySection()])
   }
 
+  function addCard() {
+    setElements([...data.elements, emptyCard()])
+  }
+
   function addArrow() {
     setElements([...data.elements, emptyArrow()])
   }
@@ -525,12 +532,20 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
               if (el.type === 'arrow') {
                 return <ArrowEditor key={el.id || idx} arrow={el} onChange={(a) => updateEl(idx, a)} onRemove={() => removeEl(idx)} />
               }
+              if (el.type === 'card') {
+                return <CardEditor key={el.id || idx} card={el} onChange={(c) => updateEl(idx, c)} onRemove={() => removeEl(idx)} onAddArrowAfter={() => {
+                  const next = [...data.elements]
+                  next.splice(idx + 1, 0, emptyArrow())
+                  setElements(next)
+                }} />
+              }
               return null
             })}
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
             <button type="button" style={smallBtn} onClick={addSection}>+ Секция</button>
+            <button type="button" style={smallBtn} onClick={addCard}>+ Карточка</button>
             <button type="button" style={smallBtn} onClick={addArrow}>+ Стрелка</button>
             <div style={{ flex: 1 }} />
             <button type="button" style={accentBtn} onClick={() => setEditing(false)}>Готово</button>
@@ -575,6 +590,7 @@ export function SchemaPreview({ elements }) {
       {elements.map((el, idx) => {
         if (el.type === 'section') return <SectionPreview key={el.id || idx} section={el} />
         if (el.type === 'arrow') return <ArrowPreview key={el.id || idx} arrow={el} />
+        if (el.type === 'card') return <CardPreview key={el.id || idx} card={el} />
         return null
       })}
     </div>
@@ -606,6 +622,7 @@ function CardPreview({ card }) {
   const st = card.style || 'icon'
   const pal = PALETTE[card.color] || PALETTE.coral
   const cardWidth = card.width || 'auto'
+  const isFilled = !!card.filled
 
   const wrapStyle = {}
   if (cardWidth !== 'auto') {
@@ -615,26 +632,32 @@ function CardPreview({ card }) {
     wrapStyle.flexShrink = 0
   }
 
+  const filledStyle = isFilled ? { background: pal.solid, color: 'white' } : {}
+  const subtextStyle = isFilled ? { opacity: 0.8 } : {}
+
   let inner
   if (st === 'pill') {
     inner = (
-      <div className="block-schema__card block-schema__card--pill">
-        <span className="block-schema__pill-dot" style={{ background: pal.solid }} />
-        {card.text && <span className="block-schema__card-text">{card.text}</span>}
+      <div className="block-schema__card block-schema__card--pill" style={filledStyle}>
+        {!isFilled && <span className="block-schema__pill-dot" style={{ background: pal.solid }} />}
+        <div>
+          {card.text && <span className="block-schema__card-text">{card.text}</span>}
+          {card.subtext && <div className="block-schema__card-subtext" style={subtextStyle}>{card.subtext}</div>}
+        </div>
       </div>
     )
   } else if (st === 'stripe') {
     inner = (
-      <div className="block-schema__card block-schema__card--stripe" style={{ borderLeftColor: pal.solid }}>
+      <div className="block-schema__card block-schema__card--stripe" style={{ borderLeftColor: pal.solid, ...filledStyle }}>
         <div>
           {card.text && <div className="block-schema__card-text">{card.text}</div>}
-          {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
+          {card.subtext && <div className="block-schema__card-subtext" style={subtextStyle}>{card.subtext}</div>}
         </div>
       </div>
     )
   } else if (st === 'image') {
     inner = (
-      <div className="block-schema__card block-schema__card--image">
+      <div className="block-schema__card block-schema__card--image" style={filledStyle}>
         <div className="block-schema__card-img">
           {card.imageUrl ? (
             <img src={card.imageUrl} alt="" />
@@ -644,19 +667,19 @@ function CardPreview({ card }) {
         </div>
         <div>
           {card.text && <div className="block-schema__card-text">{card.text}</div>}
-          {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
+          {card.subtext && <div className="block-schema__card-subtext" style={subtextStyle}>{card.subtext}</div>}
         </div>
       </div>
     )
   } else {
     inner = (
-      <div className="block-schema__card block-schema__card--icon" style={{ background: pal.bg, color: pal.text }}>
-        <div className="block-schema__icon-box" style={{ background: pal.solid }}>
+      <div className="block-schema__card block-schema__card--icon" style={isFilled ? { background: pal.solid, color: 'white' } : { background: pal.bg, color: pal.text }}>
+        <div className="block-schema__icon-box" style={{ background: isFilled ? 'rgba(255,255,255,0.2)' : pal.solid }}>
           <SvgIcon name={card.svgIcon || 'server'} size={16} color="white" />
         </div>
         <div>
           {card.text && <div className="block-schema__card-text">{card.text}</div>}
-          {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
+          {card.subtext && <div className="block-schema__card-subtext" style={subtextStyle}>{card.subtext}</div>}
         </div>
       </div>
     )

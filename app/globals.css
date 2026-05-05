@@ -914,6 +914,8 @@ input:focus:not(:focus-visible) {
 .block-schema__children--horizontal {
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
 }
 
 .block-schema__children--horizontal > * {
@@ -947,7 +949,7 @@ input:focus:not(:focus-visible) {
 
 .block-schema__card-subtext {
   font-size: 0.75rem;
-  opacity: 0.75;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
