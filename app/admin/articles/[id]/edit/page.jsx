@@ -130,7 +130,7 @@ export default function EditArticlePage() {
         is_published: nextPublished,
       }
 
-      const { error } = await supabase.from('articles').update(payload).eq('id', articleId)
+      const { error } = await supabase.from('articles').update(payload).eq('id', articleId).select().single()
 
       setSaving(false)
 
