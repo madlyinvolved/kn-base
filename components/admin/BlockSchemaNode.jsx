@@ -52,6 +52,19 @@ const CARD_STYLES = [
   { value: 'image', label: 'С картинкой' },
 ]
 
+const SECTION_WIDTHS = [
+  { value: '100', label: '100%' },
+  { value: '75', label: '75%' },
+  { value: '50', label: '50%' },
+  { value: '25', label: '25%' },
+]
+
+const CARD_WIDTHS = [
+  { value: 'auto', label: 'Авто' },
+  { value: '50', label: '50%' },
+  { value: '100', label: '100%' },
+]
+
 const ARROWS = ['↓', '↑', '→', '←', '↔', '↕']
 
 function uid() {
@@ -59,11 +72,11 @@ function uid() {
 }
 
 function emptyCard() {
-  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', color: 'coral', svgIcon: 'server', imageUrl: '' }
+  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', color: 'coral', svgIcon: 'server', imageUrl: '', width: 'auto' }
 }
 
 function emptySection() {
-  return { id: uid(), type: 'section', title: '', layout: 'vertical', children: [emptyCard()] }
+  return { id: uid(), type: 'section', title: '', layout: 'vertical', width: '100', children: [emptyCard()] }
 }
 
 function emptyArrow() {
@@ -213,7 +226,45 @@ function ImageUploader({ imageUrl, onChange }) {
   )
 }
 
-function CardEditor({ card, onChange, onRemove }) {
+function InlineArrowEditor({ arrow, onChange, onRemove }) {
+  const [open, setOpen] = useState(false)
+
+  if (!open) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '2px 0' }}>
+        <button type="button" style={{ ...smallBtn, fontSize: '1rem', padding: '0 6px', lineHeight: 1 }} onClick={() => setOpen(true)}>
+          {arrow.direction || '↓'}
+        </button>
+        <button type="button" style={{ ...deleteBtn, padding: '1px 5px' }} onClick={onRemove}>✕</button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '2px 0' }}>
+      {ARROWS.map((a) => (
+        <button
+          key={a}
+          type="button"
+          onClick={() => { onChange({ ...arrow, direction: a }); setOpen(false) }}
+          style={{
+            ...smallBtn,
+            fontSize: '0.875rem',
+            padding: '1px 6px',
+            background: arrow.direction === a ? 'var(--color-accent)' : 'var(--color-surface)',
+            color: arrow.direction === a ? 'white' : 'var(--color-text)',
+            borderColor: arrow.direction === a ? 'var(--color-accent)' : 'var(--color-border)',
+          }}
+        >
+          {a}
+        </button>
+      ))}
+      <button type="button" style={{ ...deleteBtn, padding: '1px 5px' }} onClick={onRemove}>✕</button>
+    </div>
+  )
+}
+
+function CardEditor({ card, onChange, onRemove, onAddArrowAfter }) {
   function set(field, value) {
     onChange({ ...card, [field]: value })
   }
@@ -238,6 +289,9 @@ function CardEditor({ card, onChange, onRemove }) {
       <div style={{ display: 'flex', gap: '6px', marginBottom: '6px', alignItems: 'center' }}>
         <select style={selectStyle} value={st} onChange={(e) => set('style', e.target.value)}>
           {CARD_STYLES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+        <select style={selectStyle} value={card.width || 'auto'} onChange={(e) => set('width', e.target.value)} title="Ширина карточки">
+          {CARD_WIDTHS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
         </select>
       </div>
 
@@ -276,6 +330,12 @@ function CardEditor({ card, onChange, onRemove }) {
       )}
 
       <ColorPicker value={card.color} onChange={(v) => set('color', v)} />
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+        <button type="button" style={{ ...smallBtn, padding: '1px 8px', fontSize: '0.6875rem' }} onClick={onAddArrowAfter} title="Добавить стрелку после">
+          + ↓
+        </button>
+      </div>
     </div>
   )
 }
@@ -292,7 +352,8 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
 
   function removeChild(idx) {
     const next = section.children.filter((_, i) => i !== idx)
-    setField('children', next.length ? next : [emptyCard()])
+    const hasCards = next.some((c) => c.type === 'card' || c.type === 'section')
+    setField('children', hasCards ? next : [emptyCard()])
   }
 
   function addCard() {
@@ -302,6 +363,12 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
   function addSubSection() {
     if (depth >= 2) return
     setField('children', [...section.children, emptySection()])
+  }
+
+  function addArrowAfter(idx) {
+    const next = [...section.children]
+    next.splice(idx + 1, 0, emptyArrow())
+    setField('children', next)
   }
 
   function moveChild(idx, dir) {
@@ -324,13 +391,16 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
         background: depth === 0 ? 'var(--color-bg)' : 'transparent',
       }}
     >
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '10px' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap' }}>
         <input
-          style={{ ...inputStyle, fontWeight: 600, flex: 1, fontSize: '0.875rem' }}
+          style={{ ...inputStyle, fontWeight: 600, flex: 1, fontSize: '0.875rem', minWidth: '100px' }}
           value={section.title}
           onChange={(e) => setField('title', e.target.value)}
           placeholder="Заголовок секции"
         />
+        <select style={selectStyle} value={section.width || '100'} onChange={(e) => setField('width', e.target.value)} title="Ширина секции">
+          {SECTION_WIDTHS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
+        </select>
         <button
           type="button"
           style={isHorizontal ? { ...smallBtn, background: '#e0e7ff', borderColor: '#818cf8' } : smallBtn}
@@ -352,7 +422,7 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
       }}>
         {section.children.map((child, idx) => (
           <div key={child.id || idx} style={{ flex: isHorizontal ? '1 1 0' : undefined, minWidth: isHorizontal ? '140px' : undefined, position: 'relative' }}>
-            {section.children.length > 1 && (
+            {section.children.length > 1 && child.type !== 'arrow' && (
               <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
                 <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>
                   {isHorizontal ? '←' : '↑'}
@@ -363,7 +433,9 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
               </div>
             )}
             {child.type === 'card' ? (
-              <CardEditor card={child} onChange={(c) => updateChild(idx, c)} onRemove={() => removeChild(idx)} />
+              <CardEditor card={child} onChange={(c) => updateChild(idx, c)} onRemove={() => removeChild(idx)} onAddArrowAfter={() => addArrowAfter(idx)} />
+            ) : child.type === 'arrow' ? (
+              <InlineArrowEditor arrow={child} onChange={(a) => updateChild(idx, a)} onRemove={() => removeChild(idx)} />
             ) : child.type === 'section' ? (
               <SectionEditor section={child} onChange={(s) => updateChild(idx, s)} onRemove={() => removeChild(idx)} depth={depth + 1} />
             ) : null}
@@ -511,13 +583,21 @@ export function SchemaPreview({ elements }) {
 
 function SectionPreview({ section }) {
   const isHorizontal = section.layout === 'horizontal'
+  const width = section.width || '100'
+
+  const sectionStyle = {}
+  if (width !== '100') {
+    sectionStyle.width = `${width}%`
+    sectionStyle.margin = '0 auto'
+  }
 
   return (
-    <div className="block-schema__section">
+    <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
       <div className={isHorizontal ? 'block-schema__children block-schema__children--horizontal' : 'block-schema__children'}>
         {(section.children || []).map((child, idx) => {
           if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
+          if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
           if (child.type === 'section') return <SectionPreview key={child.id || idx} section={child} />
           return null
         })}
@@ -529,18 +609,26 @@ function SectionPreview({ section }) {
 function CardPreview({ card }) {
   const st = card.style || 'icon'
   const pal = PALETTE[card.color] || PALETTE.coral
+  const cardWidth = card.width || 'auto'
 
+  const wrapStyle = {}
+  if (cardWidth !== 'auto') {
+    wrapStyle.width = `${cardWidth}%`
+    wrapStyle.flexBasis = `${cardWidth}%`
+    wrapStyle.flexGrow = 0
+    wrapStyle.flexShrink = 0
+  }
+
+  let inner
   if (st === 'pill') {
-    return (
+    inner = (
       <div className="block-schema__card block-schema__card--pill">
         <span className="block-schema__pill-dot" style={{ background: pal.solid }} />
         {card.text && <span className="block-schema__card-text">{card.text}</span>}
       </div>
     )
-  }
-
-  if (st === 'stripe') {
-    return (
+  } else if (st === 'stripe') {
+    inner = (
       <div className="block-schema__card block-schema__card--stripe" style={{ borderLeftColor: pal.solid }}>
         <div>
           {card.text && <div className="block-schema__card-text">{card.text}</div>}
@@ -548,10 +636,8 @@ function CardPreview({ card }) {
         </div>
       </div>
     )
-  }
-
-  if (st === 'image') {
-    return (
+  } else if (st === 'image') {
+    inner = (
       <div className="block-schema__card block-schema__card--image">
         <div className="block-schema__card-img">
           {card.imageUrl ? (
@@ -566,19 +652,24 @@ function CardPreview({ card }) {
         </div>
       </div>
     )
+  } else {
+    inner = (
+      <div className="block-schema__card block-schema__card--icon" style={{ background: pal.bg, color: pal.text }}>
+        <div className="block-schema__icon-box" style={{ background: pal.solid }}>
+          <SvgIcon name={card.svgIcon || 'server'} size={16} color="white" />
+        </div>
+        <div>
+          {card.text && <div className="block-schema__card-text">{card.text}</div>}
+          {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
+        </div>
+      </div>
+    )
   }
 
-  return (
-    <div className="block-schema__card block-schema__card--icon" style={{ background: pal.bg, color: pal.text }}>
-      <div className="block-schema__icon-box" style={{ background: pal.solid }}>
-        <SvgIcon name={card.svgIcon || 'server'} size={16} color="white" />
-      </div>
-      <div>
-        {card.text && <div className="block-schema__card-text">{card.text}</div>}
-        {card.subtext && <div className="block-schema__card-subtext">{card.subtext}</div>}
-      </div>
-    </div>
-  )
+  if (cardWidth !== 'auto') {
+    return <div style={wrapStyle}>{inner}</div>
+  }
+  return inner
 }
 
 function ArrowPreview({ arrow }) {
