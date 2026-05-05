@@ -585,11 +585,7 @@ function SectionPreview({ section }) {
   const isHorizontal = section.layout === 'horizontal'
   const width = section.width || '100'
 
-  const sectionStyle = {}
-  if (width !== '100') {
-    sectionStyle.width = `${width}%`
-    sectionStyle.margin = '0 auto'
-  }
+  const sectionStyle = { width: `${width}%` }
 
   return (
     <div className="block-schema__section" style={sectionStyle}>
@@ -667,7 +663,7 @@ function CardPreview({ card }) {
   }
 
   if (cardWidth !== 'auto') {
-    return <div style={wrapStyle}>{inner}</div>
+    return <div className="block-schema__card-sized" style={wrapStyle}>{inner}</div>
   }
   return inner
 }

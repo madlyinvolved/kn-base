@@ -891,7 +891,7 @@ input:focus:not(:focus-visible) {
 }
 
 .block-schema__section {
-  width: 100%;
+  align-self: center;
 }
 
 .block-schema__section-title {
@@ -918,6 +918,10 @@ input:focus:not(:focus-visible) {
 .block-schema__children--horizontal > * {
   flex: 1 1 0;
   min-width: 120px;
+}
+
+.block-schema__children--horizontal > .block-schema__card-sized {
+  flex: none;
 }
 
 .block-schema__card {
