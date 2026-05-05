@@ -1038,3 +1038,52 @@ input:focus:not(:focus-visible) {
 .block-schema__insert-between:hover {
   opacity: 1;
 }
+
+.block-schema__card-wrap {
+  position: relative;
+}
+.block-schema__card-wrap--has-tooltip > .block-schema__card {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.block-schema__card-wrap--has-tooltip:hover > .block-schema__card {
+  transform: scale(1.03);
+}
+
+.block-schema__tooltip {
+  position: absolute;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-width: 220px;
+  width: max-content;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.block-schema__card-wrap:hover > .block-schema__tooltip {
+  opacity: 1;
+}
+.block-schema__tooltip-title {
+  font-weight: 500;
+  font-size: 0.8125rem;
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+.block-schema__tooltip-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .block-schema__tooltip {
+    left: 50% !important;
+    right: auto !important;
+    top: calc(100% + 8px) !important;
+    transform: translateX(-50%) !important;
+  }
+}

@@ -2,7 +2,7 @@
 
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { uploadImageToStorage } from '../../lib/utils/uploadImage.js'
 
 const PALETTE = {
@@ -72,7 +72,7 @@ function uid() {
 }
 
 function emptyCard() {
-  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', color: 'coral', svgIcon: 'server', imageUrl: '', width: 'auto', filled: false }
+  return { id: uid(), type: 'card', style: 'icon', text: '', subtext: '', tooltip: '', color: 'coral', svgIcon: 'server', imageUrl: '', width: 'auto', filled: false }
 }
 
 function emptySection() {
@@ -321,6 +321,14 @@ function CardEditor({ card, onChange, onRemove, onAddArrowAfter }) {
         value={card.subtext}
         onChange={(e) => set('subtext', e.target.value)}
         placeholder="Подтекст"
+      />
+
+      <textarea
+        style={{ ...inputStyle, fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '4px', resize: 'vertical', minHeight: '32px' }}
+        value={card.tooltip || ''}
+        onChange={(e) => set('tooltip', e.target.value)}
+        placeholder="Текст подсказки при наведении (необязательно)"
+        rows={1}
       />
 
       {st === 'icon' && (
@@ -691,11 +699,50 @@ function SectionPreview({ section }) {
   )
 }
 
+function useTooltipSide(cardRef) {
+  const [side, setSide] = useState('right')
+
+  const update = useCallback(() => {
+    const el = cardRef.current
+    if (!el) return
+    const schema = el.closest('.block-schema')
+    if (!schema) return
+    const schemaRect = schema.getBoundingClientRect()
+    const cardRect = el.getBoundingClientRect()
+    const cardCenter = cardRect.left + cardRect.width / 2
+    const third = schemaRect.width / 3
+    const rel = cardCenter - schemaRect.left
+    setSide(rel < third ? 'right' : rel > third * 2 ? 'left' : 'right')
+  }, [cardRef])
+
+  return { side, update }
+}
+
+function CardTooltip({ card, side }) {
+  if (!card.tooltip) return null
+  const isLeft = side === 'left'
+
+  const pos = isLeft
+    ? { right: 'calc(100% + 12px)', top: '50%', transform: 'translateY(-50%)' }
+    : { left: 'calc(100% + 12px)', top: '50%', transform: 'translateY(-50%)' }
+
+  return (
+    <div className="block-schema__tooltip" style={pos}>
+      {card.text && <div className="block-schema__tooltip-title">{card.text}</div>}
+      <div className="block-schema__tooltip-desc">{card.tooltip}</div>
+    </div>
+  )
+}
+
 function CardPreview({ card }) {
   const st = card.style || 'icon'
   const pal = PALETTE[card.color] || PALETTE.coral
   const cardWidth = card.width || 'auto'
   const isFilled = !!card.filled
+  const hasTooltip = !!card.tooltip
+
+  const cardRef = useRef(null)
+  const { side, update } = useTooltipSide(cardRef)
 
   const wrapStyle = {}
   if (cardWidth !== 'auto') {
@@ -707,6 +754,8 @@ function CardPreview({ card }) {
 
   const filledStyle = isFilled ? { background: pal.solid, color: 'white' } : {}
   const subtextStyle = isFilled ? { opacity: 0.8 } : {}
+
+  const wrapperClass = hasTooltip ? 'block-schema__card-wrap block-schema__card-wrap--has-tooltip' : 'block-schema__card-wrap'
 
   let inner
   if (st === 'pill') {
@@ -758,10 +807,17 @@ function CardPreview({ card }) {
     )
   }
 
+  const result = (
+    <div className={wrapperClass} ref={cardRef} onMouseEnter={hasTooltip ? update : undefined}>
+      {inner}
+      {hasTooltip && <CardTooltip card={card} side={side} />}
+    </div>
+  )
+
   if (cardWidth !== 'auto') {
-    return <div className="block-schema__card-sized" style={wrapStyle}>{inner}</div>
+    return <div className="block-schema__card-sized" style={wrapStyle}>{result}</div>
   }
-  return inner
+  return result
 }
 
 function ArrowPreview({ arrow }) {
