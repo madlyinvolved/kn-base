@@ -479,6 +479,72 @@ function ArrowEditor({ arrow, onChange, onRemove }) {
   )
 }
 
+function InsertBetweenButton({ onInsert }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0',
+        position: 'relative',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          opacity: open ? 1 : undefined,
+        }}
+        className="block-schema__insert-between"
+      >
+        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          style={{
+            ...smallBtn,
+            fontSize: '0.75rem',
+            padding: '0 6px',
+            lineHeight: '16px',
+            borderRadius: '50%',
+            width: '18px',
+            height: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          +
+        </button>
+        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
+      </div>
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          zIndex: 10,
+          display: 'flex',
+          gap: '4px',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '8px',
+          padding: '4px 6px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+        }}>
+          <button type="button" style={smallBtn} onClick={() => { onInsert('arrow'); setOpen(false) }}>Стрелка</button>
+          <button type="button" style={smallBtn} onClick={() => { onInsert('card'); setOpen(false) }}>Карточка</button>
+          <button type="button" style={smallBtn} onClick={() => { onInsert('section'); setOpen(false) }}>Секция</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
   const data = node.attrs.data || { elements: [] }
   const [editing, setEditing] = useState(!data.elements.length)
@@ -493,6 +559,13 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
 
   function removeEl(idx) {
     setElements(data.elements.filter((_, i) => i !== idx))
+  }
+
+  function insertAt(idx, type) {
+    const creators = { arrow: emptyArrow, card: emptyCard, section: emptySection }
+    const next = [...data.elements]
+    next.splice(idx, 0, (creators[type] || emptyCard)())
+    setElements(next)
   }
 
   function addSection() {
@@ -524,22 +597,22 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
             Конструктор блок-схемы
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {data.elements.map((el, idx) => {
-              if (el.type === 'section') {
-                return <SectionEditor key={el.id || idx} section={el} onChange={(s) => updateEl(idx, s)} onRemove={() => removeEl(idx)} />
-              }
-              if (el.type === 'arrow') {
-                return <ArrowEditor key={el.id || idx} arrow={el} onChange={(a) => updateEl(idx, a)} onRemove={() => removeEl(idx)} />
-              }
-              if (el.type === 'card') {
-                return <CardEditor key={el.id || idx} card={el} onChange={(c) => updateEl(idx, c)} onRemove={() => removeEl(idx)} onAddArrowAfter={() => {
-                  const next = [...data.elements]
-                  next.splice(idx + 1, 0, emptyArrow())
-                  setElements(next)
-                }} />
-              }
-              return null
+              const item = el.type === 'section' ? (
+                <SectionEditor key={el.id || idx} section={el} onChange={(s) => updateEl(idx, s)} onRemove={() => removeEl(idx)} />
+              ) : el.type === 'arrow' ? (
+                <ArrowEditor key={el.id || idx} arrow={el} onChange={(a) => updateEl(idx, a)} onRemove={() => removeEl(idx)} />
+              ) : el.type === 'card' ? (
+                <CardEditor key={el.id || idx} card={el} onChange={(c) => updateEl(idx, c)} onRemove={() => removeEl(idx)} onAddArrowAfter={() => insertAt(idx + 1, 'arrow')} />
+              ) : null
+
+              return (
+                <div key={el.id || idx}>
+                  {idx > 0 && <InsertBetweenButton onInsert={(type) => insertAt(idx, type)} />}
+                  {item}
+                </div>
+              )
             })}
           </div>
 

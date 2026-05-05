@@ -1030,3 +1030,11 @@ input:focus:not(:focus-visible) {
   color: var(--color-text-secondary);
   user-select: none;
 }
+
+.block-schema__insert-between {
+  opacity: 0.4;
+  transition: opacity 150ms ease;
+}
+.block-schema__insert-between:hover {
+  opacity: 1;
+}
