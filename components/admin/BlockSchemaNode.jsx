@@ -446,9 +446,9 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
       </div>
 
       {isHorizontal ? (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', flexWrap: 'nowrap' }}>
+        <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', gap: '8px' }}>
           {section.children.map((child, idx) => (
-            <div key={child.id || idx} style={{ flex: '1 1 0', minWidth: 0, width: 0, position: 'relative' }}>
+            <div key={child.id || idx} style={{ minWidth: 0, position: 'relative' }}>
               {section.children.length > 1 && child.type !== 'arrow' && (
                 <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
                   <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>←</button>
