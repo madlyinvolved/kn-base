@@ -699,6 +699,9 @@ export function SchemaPreview({ elements }) {
 
   return (
     <div className="block-schema">
+      <div style={{ fontSize: '10px', color: 'red', textAlign: 'left', wordBreak: 'break-all' }}>
+        DEBUG: {JSON.stringify(elements.map(e => ({ t: e.type, layout: e.layout, ch: e.children?.length })))}
+      </div>
       {elements.map((el, idx) => {
         if (el.type === 'section') return <SectionPreview key={el.id || idx} section={el} />
         if (el.type === 'arrow') return <ArrowPreview key={el.id || idx} arrow={el} />
@@ -729,6 +732,9 @@ function SectionPreview({ section }) {
 
   return (
     <div className="block-schema__section" style={sectionStyle}>
+      <div style={{ fontSize: '10px', color: 'blue' }}>
+        SEC: layout={section.layout} horiz={String(isHorizontal)} kids={children.length} types={children.map(c=>c.type).join(',')}
+      </div>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
       {isHorizontal ? (
         <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, justifyContent: 'center', alignItems: 'flex-start', outline: '2px dashed blue' }}>
