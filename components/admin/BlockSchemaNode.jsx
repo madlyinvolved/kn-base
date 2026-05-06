@@ -510,26 +510,41 @@ function InsertBetweenButton({ onInsert }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div style={{ height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '4px 0',
+      position: 'relative',
+    }}>
+      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)', opacity: 0.5 }} />
       <button
         type="button"
         onClick={() => setOpen(!open)}
         style={{
-          background: 'none',
-          border: 'none',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '50%',
+          width: '24px',
+          height: '24px',
           cursor: 'pointer',
           fontSize: '16px',
           lineHeight: 1,
           color: 'var(--color-text-secondary)',
-          opacity: open ? 1 : 0.3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          padding: 0,
+          opacity: open ? 1 : 0.5,
           transition: 'opacity 150ms ease',
-          padding: '0 4px',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-        onMouseLeave={(e) => { if (!open) e.currentTarget.style.opacity = '0.3' }}
+        onMouseLeave={(e) => { if (!open) e.currentTarget.style.opacity = '0.5' }}
       >
         +
       </button>
+      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)', opacity: 0.5 }} />
       {open && (
         <div style={{
           position: 'absolute',
