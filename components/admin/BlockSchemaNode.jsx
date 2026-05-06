@@ -748,7 +748,7 @@ function useTooltipSide(cardRef) {
     const cardCenter = cardRect.left + cardRect.width / 2
     const third = schemaRect.width / 3
     const rel = cardCenter - schemaRect.left
-    setSide(rel < third ? 'right' : rel > third * 2 ? 'left' : 'right')
+    setSide(rel < schemaRect.width / 2 ? 'left' : 'right')
   }, [cardRef])
 
   return { side, update }
