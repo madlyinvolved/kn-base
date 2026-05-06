@@ -12,8 +12,17 @@ const PALETTE = {
   pink:   { bg: '#fdf2f8', solid: '#db2777', text: '#9d174d' },
   blue:   { bg: '#eff6ff', solid: '#2563eb', text: '#1e40af' },
   amber:  { bg: '#fffbeb', solid: '#d97706', text: '#92400e' },
+  'pastel-coral':  { bg: '#FAECE7', solid: '#FAECE7', text: '#9a3412', pastel: true },
+  'pastel-teal':   { bg: '#E1F5EE', solid: '#E1F5EE', text: '#115e59', pastel: true },
+  'pastel-purple': { bg: '#EEEDFE', solid: '#EEEDFE', text: '#5b21b6', pastel: true },
+  'pastel-pink':   { bg: '#FBEAF0', solid: '#FBEAF0', text: '#9d174d', pastel: true },
+  'pastel-blue':   { bg: '#E6F1FB', solid: '#E6F1FB', text: '#1e40af', pastel: true },
+  'pastel-amber':  { bg: '#FAEEDA', solid: '#FAEEDA', text: '#92400e', pastel: true },
+  'pastel-gray':   { bg: '#F1EFE8', solid: '#F1EFE8', text: '#44403c', pastel: true },
 }
 const PALETTE_NAMES = Object.keys(PALETTE)
+const BRIGHT_COLORS = PALETTE_NAMES.filter((c) => !PALETTE[c].pastel)
+const PASTEL_COLORS = PALETTE_NAMES.filter((c) => PALETTE[c].pastel)
 
 const ICONS = {
   server:   '<rect x="4" y="2" width="16" height="8" rx="2"/><rect x="4" y="14" width="16" height="8" rx="2"/><circle cx="8" cy="6" r="1"/><circle cx="8" cy="18" r="1"/>',
@@ -131,31 +140,41 @@ const selectStyle = {
 }
 
 function ColorPicker({ value, onChange }) {
+  function renderRow(colors) {
+    return (
+      <div style={{ display: 'flex', gap: '4px' }}>
+        {colors.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: '50%',
+              border: value === c ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+              background: PALETTE[c].solid,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+            title={c}
+          />
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-      {PALETTE_NAMES.map((c) => (
-        <button
-          key={c}
-          type="button"
-          onClick={() => onChange(c)}
-          style={{
-            width: 18,
-            height: 18,
-            borderRadius: '50%',
-            border: value === c ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-            background: PALETTE[c].solid,
-            cursor: 'pointer',
-            padding: 0,
-          }}
-          title={c}
-        />
-      ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px' }}>
+      {renderRow(BRIGHT_COLORS)}
+      {renderRow(PASTEL_COLORS)}
     </div>
   )
 }
 
 function IconPicker({ value, onChange, color }) {
   const pal = PALETTE[color] || PALETTE.coral
+  const iconColor = pal.pastel ? pal.text : pal.solid
   return (
     <div style={{ display: 'flex', gap: '3px', marginTop: '4px', flexWrap: 'wrap' }}>
       {ICON_NAMES.map((name) => (
@@ -177,7 +196,7 @@ function IconPicker({ value, onChange, color }) {
           }}
           title={name}
         >
-          <SvgIcon name={name} size={14} color={value === name ? pal.solid : 'var(--color-text-secondary)'} />
+          <SvgIcon name={name} size={14} color={value === name ? iconColor : 'var(--color-text-secondary)'} />
         </button>
       ))}
     </div>
@@ -505,9 +524,8 @@ function InsertBetweenButton({ onInsert }) {
           display: 'flex',
           alignItems: 'center',
           width: '100%',
-          opacity: open ? 1 : undefined,
         }}
-        className="block-schema__insert-between"
+        className={open ? 'block-schema__insert-between block-schema__insert-between--open' : 'block-schema__insert-between'}
       >
         <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
         <button
@@ -752,8 +770,13 @@ function CardPreview({ card }) {
     wrapStyle.flexShrink = 0
   }
 
-  const filledStyle = isFilled ? { background: pal.solid, color: 'white' } : {}
-  const subtextStyle = isFilled ? { opacity: 0.8 } : {}
+  const isPastel = !!pal.pastel
+  const filledBg = isFilled ? pal.solid : undefined
+  const filledText = isFilled ? (isPastel ? pal.text : 'white') : undefined
+  const filledStyle = isFilled ? { background: filledBg, color: filledText } : {}
+  const subtextStyle = isFilled
+    ? (isPastel ? { color: pal.text, opacity: 0.7 } : { color: 'white', opacity: 0.8 })
+    : {}
 
   const wrapperClass = hasTooltip ? 'block-schema__card-wrap block-schema__card-wrap--has-tooltip' : 'block-schema__card-wrap'
 
@@ -770,7 +793,7 @@ function CardPreview({ card }) {
     )
   } else if (st === 'stripe') {
     inner = (
-      <div className="block-schema__card block-schema__card--stripe" style={{ borderLeftColor: pal.solid, ...filledStyle }}>
+      <div className="block-schema__card block-schema__card--stripe" style={isFilled ? { borderLeftColor: filledBg, ...filledStyle } : { borderLeftColor: pal.solid }}>
         <div>
           {card.text && <div className="block-schema__card-text">{card.text}</div>}
           {card.subtext && <div className="block-schema__card-subtext" style={subtextStyle}>{card.subtext}</div>}
@@ -794,9 +817,10 @@ function CardPreview({ card }) {
       </div>
     )
   } else {
+    const iconBg = isFilled ? (isPastel ? pal.text : 'rgba(255,255,255,0.2)') : pal.solid
     inner = (
-      <div className="block-schema__card block-schema__card--icon" style={isFilled ? { background: pal.solid, color: 'white' } : { background: pal.bg, color: pal.text }}>
-        <div className="block-schema__icon-box" style={{ background: isFilled ? 'rgba(255,255,255,0.2)' : pal.solid }}>
+      <div className="block-schema__card block-schema__card--icon" style={isFilled ? { background: filledBg, color: filledText } : { background: 'var(--color-surface)', color: pal.text }}>
+        <div className="block-schema__icon-box" style={{ background: iconBg }}>
           <SvgIcon name={card.svgIcon || 'server'} size={16} color="white" />
         </div>
         <div>

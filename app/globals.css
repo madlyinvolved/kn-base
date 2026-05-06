@@ -1029,18 +1029,25 @@ input:focus:not(:focus-visible) {
   margin: 8px auto;
   color: var(--color-text-secondary);
   user-select: none;
+  align-self: center;
 }
 
 .block-schema__insert-between {
-  opacity: 0.4;
+  opacity: 0;
   transition: opacity 150ms ease;
+  padding: 2px 0;
 }
-.block-schema__insert-between:hover {
-  opacity: 1;
+.block-schema__insert-between:hover,
+.block-schema__insert-between--open {
+  opacity: 0.6;
 }
 
 .block-schema__card-wrap {
   position: relative;
+  align-self: center;
+}
+.block-schema__card-sized {
+  align-self: center;
 }
 .block-schema__card-wrap--has-tooltip > .block-schema__card {
   cursor: pointer;
