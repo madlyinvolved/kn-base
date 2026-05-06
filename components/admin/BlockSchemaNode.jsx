@@ -732,9 +732,9 @@ function SectionPreview({ section }) {
   function buildHorizontalStyle(child) {
     const fixed = getChildWidth(child)
     if (fixed != null) {
-      return { flex: `0 0 ${fixed}%`, minWidth: 0, overflow: 'hidden' }
+      return { flex: `0 0 ${fixed}%`, minWidth: 0 }
     }
-    return { flex: '1 1 0', minWidth: 0, overflow: 'hidden' }
+    return { flex: '1 1 0', minWidth: 0 }
   }
 
   function buildVerticalCardStyle(child) {
