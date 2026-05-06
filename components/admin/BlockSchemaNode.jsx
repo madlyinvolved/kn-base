@@ -720,26 +720,40 @@ function SectionPreview({ section }) {
   if (isHorizontal) childrenClass += ' block-schema__children--horizontal'
   if (isCompact) childrenClass += ' block-schema__children--compact'
 
-  const childCount = (section.children || []).length
-  const childrenStyle = isHorizontal && !isCompact
-    ? { display: 'grid', gridTemplateColumns: `repeat(${childCount}, 1fr)`, gap: '12px', alignItems: 'start' }
-    : undefined
+  const children = section.children || []
+  const childCount = children.length
+  const gap = 12
+  const equalWidth = childCount > 1
+    ? `calc(${100 / childCount}% - ${(childCount - 1) * gap / childCount}px)`
+    : '100%'
 
   return (
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
-      <div className={childrenClass} style={childrenStyle}>
-        {(section.children || []).map((child, idx) => {
-          const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} />
-            : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
-            : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
-            : null
-          if (isHorizontal && !isCompact) {
-            return <div key={child.id || idx} style={{ minWidth: 0, overflow: 'hidden' }}>{item}</div>
-          }
-          return item
-        })}
-      </div>
+      {isHorizontal ? (
+        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, justifyContent: 'center', alignItems: 'flex-start' }}>
+          {children.map((child, idx) => {
+            const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
+              : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
+              : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
+              : null
+            return (
+              <div key={child.id || idx} style={{ width: equalWidth, flexShrink: 0, minWidth: 0 }}>
+                {item}
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className={childrenClass}>
+          {children.map((child, idx) => {
+            if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
+            if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
+            if (child.type === 'section') return <SectionPreview key={child.id || idx} section={child} />
+            return null
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -779,7 +793,7 @@ function CardTooltip({ card, side }) {
   )
 }
 
-function CardPreview({ card }) {
+function CardPreview({ card, stretch }) {
   const st = card.style || 'icon'
   const pal = PALETTE[card.color] || PALETTE.coral
   const cardWidth = card.width || 'auto'
@@ -858,8 +872,10 @@ function CardPreview({ card }) {
     )
   }
 
+  const wrapperStyle = stretch ? { width: '100%' } : undefined
+
   const result = (
-    <div className={wrapperClass} ref={cardRef} onMouseEnter={hasTooltip ? update : undefined}>
+    <div className={wrapperClass} ref={cardRef} onMouseEnter={hasTooltip ? update : undefined} style={wrapperStyle}>
       {inner}
       {hasTooltip && <CardTooltip card={card} side={side} />}
     </div>

@@ -915,35 +915,8 @@ input:focus:not(:focus-visible) {
   gap: 6px;
 }
 
-.block-schema__children--horizontal {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.block-schema__children--horizontal .block-schema__card-wrap,
-.block-schema__children--horizontal .block-schema__card-sized,
-.block-schema__children--horizontal .block-schema__card {
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .block-schema__children--horizontal .block-schema__children {
   align-items: stretch;
-}
-
-.block-schema__children--compact {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-.block-schema__children--compact > * {
-  flex: 0 1 auto;
 }
 
 .block-schema__card {
