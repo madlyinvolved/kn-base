@@ -720,8 +720,9 @@ function SectionPreview({ section }) {
   if (isHorizontal) childrenClass += ' block-schema__children--horizontal'
   if (isCompact) childrenClass += ' block-schema__children--compact'
 
+  const childCount = (section.children || []).length
   const childrenStyle = isHorizontal && !isCompact
-    ? { display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', gap: '12px', alignItems: 'start' }
+    ? { display: 'grid', gridTemplateColumns: `repeat(${childCount}, 1fr)`, gap: '12px', alignItems: 'start' }
     : undefined
 
   return (
@@ -729,10 +730,14 @@ function SectionPreview({ section }) {
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
       <div className={childrenClass} style={childrenStyle}>
         {(section.children || []).map((child, idx) => {
-          if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
-          if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
-          if (child.type === 'section') return <SectionPreview key={child.id || idx} section={child} />
-          return null
+          const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} />
+            : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
+            : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
+            : null
+          if (isHorizontal && !isCompact) {
+            return <div key={child.id || idx} style={{ minWidth: 0, overflow: 'hidden' }}>{item}</div>
+          }
+          return item
         })}
       </div>
     </div>

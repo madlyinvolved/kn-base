@@ -923,6 +923,13 @@ input:focus:not(:focus-visible) {
   align-items: start;
 }
 
+.block-schema__children--horizontal .block-schema__card-wrap,
+.block-schema__children--horizontal .block-schema__card-sized,
+.block-schema__children--horizontal .block-schema__card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .block-schema__children--horizontal .block-schema__children {
   align-items: stretch;
 }
