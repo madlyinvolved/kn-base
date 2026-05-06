@@ -439,15 +439,14 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
         </button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-        {section.children.map((child, idx) => (
-          <div key={child.id || idx}>
-            {idx > 0 && <InsertBetweenButton onInsert={(type) => insertChildAt(idx, type)} />}
-            <div style={{ position: 'relative' }}>
+      {isHorizontal ? (
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', flexWrap: 'wrap' }}>
+          {section.children.map((child, idx) => (
+            <div key={child.id || idx} style={{ flex: '1 1 0', minWidth: '140px', position: 'relative' }}>
               {section.children.length > 1 && child.type !== 'arrow' && (
                 <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
-                  <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>↑</button>
-                  <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)}>↓</button>
+                  <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>←</button>
+                  <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)}>→</button>
                 </div>
               )}
               {child.type === 'card' ? (
@@ -458,9 +457,32 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
                 <SectionEditor section={child} onChange={(s) => updateChild(idx, s)} onRemove={() => removeChild(idx)} depth={depth + 1} />
               ) : null}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          {section.children.map((child, idx) => (
+            <div key={child.id || idx}>
+              {idx > 0 && <InsertBetweenButton onInsert={(type) => insertChildAt(idx, type)} />}
+              <div style={{ position: 'relative' }}>
+                {section.children.length > 1 && child.type !== 'arrow' && (
+                  <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
+                    <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>↑</button>
+                    <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)}>↓</button>
+                  </div>
+                )}
+                {child.type === 'card' ? (
+                  <CardEditor card={child} onChange={(c) => updateChild(idx, c)} onRemove={() => removeChild(idx)} />
+                ) : child.type === 'arrow' ? (
+                  <InlineArrowEditor arrow={child} onChange={(a) => updateChild(idx, a)} onRemove={() => removeChild(idx)} />
+                ) : child.type === 'section' ? (
+                  <SectionEditor section={child} onChange={(s) => updateChild(idx, s)} onRemove={() => removeChild(idx)} depth={depth + 1} />
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
         <button type="button" style={smallBtn} onClick={addCard}>+ Карточка</button>
