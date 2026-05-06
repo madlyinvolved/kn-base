@@ -936,6 +936,10 @@ input:focus:not(:focus-visible) {
   align-items: stretch;
 }
 
+.block-schema__children--compact > * {
+  flex: 0 1 auto;
+}
+
 .block-schema__card {
   display: flex;
   align-items: center;

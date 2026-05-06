@@ -85,7 +85,7 @@ function emptyCard() {
 }
 
 function emptySection() {
-  return { id: uid(), type: 'section', title: '', layout: 'vertical', width: '100', children: [emptyCard()] }
+  return { id: uid(), type: 'section', title: '', layout: 'vertical', width: '100', stretch: true, children: [emptyCard()] }
 }
 
 function emptyArrow() {
@@ -434,6 +434,12 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
         >
           {isHorizontal ? '⇔' : '⇕'}
         </button>
+        {isHorizontal && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.6875rem', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+            <input type="checkbox" checked={section.stretch !== false} onChange={(e) => setField('stretch', e.target.checked)} />
+            Растянуть
+          </label>
+        )}
         <button type="button" style={deleteBtn} onClick={onRemove} title="Удалить секцию">
           ✕
         </button>
@@ -705,14 +711,19 @@ export function SchemaPreview({ elements }) {
 
 function SectionPreview({ section }) {
   const isHorizontal = section.layout === 'horizontal'
+  const isCompact = isHorizontal && section.stretch === false
   const width = section.width || '100'
 
   const sectionStyle = { width: `${width}%` }
 
+  let childrenClass = 'block-schema__children'
+  if (isHorizontal) childrenClass += ' block-schema__children--horizontal'
+  if (isCompact) childrenClass += ' block-schema__children--compact'
+
   return (
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
-      <div className={isHorizontal ? 'block-schema__children block-schema__children--horizontal' : 'block-schema__children'}>
+      <div className={childrenClass}>
         {(section.children || []).map((child, idx) => {
           if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
           if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
