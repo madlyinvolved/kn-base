@@ -70,7 +70,9 @@ const SECTION_WIDTHS = [
 
 const CARD_WIDTHS = [
   { value: 'auto', label: 'Авто' },
+  { value: '25', label: '25%' },
   { value: '50', label: '50%' },
+  { value: '75', label: '75%' },
   { value: '100', label: '100%' },
 ]
 
@@ -434,12 +436,6 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
         >
           {isHorizontal ? '⇔' : '⇕'}
         </button>
-        {isHorizontal && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.6875rem', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
-            <input type="checkbox" checked={section.stretch !== false} onChange={(e) => setField('stretch', e.target.checked)} />
-            Растянуть
-          </label>
-        )}
         <button type="button" style={deleteBtn} onClick={onRemove} title="Удалить секцию">
           ✕
         </button>
@@ -711,34 +707,37 @@ export function SchemaPreview({ elements }) {
 
 function SectionPreview({ section }) {
   const isHorizontal = section.layout === 'horizontal'
-  const isCompact = isHorizontal && section.stretch === false
   const width = section.width || '100'
-
   const sectionStyle = { width: `${width}%` }
-
   const children = section.children || []
-  const childCount = children.length
   const gap = 12
-  const equalWidth = childCount > 1
-    ? `calc(${100 / childCount}% - ${(childCount - 1) * gap / childCount}px)`
-    : '100%'
+
+  function getChildWidth(child) {
+    const w = child.type === 'card' ? (child.width || 'auto') : 'auto'
+    return w === 'auto' ? null : parseInt(w, 10)
+  }
+
+  function buildHorizontalStyle(child) {
+    const fixed = getChildWidth(child)
+    if (fixed != null) {
+      return { flex: 'none', width: `calc(${fixed}% - ${gap / 2}px)`, minWidth: 0, overflow: 'hidden' }
+    }
+    return { flex: '1 1 0', minWidth: 0, overflow: 'hidden' }
+  }
 
   return (
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
       {isHorizontal ? (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, alignItems: 'flex-start' }}>
-          {children.map((child, idx) => {
-            const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
-              : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
-              : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
-              : null
-            return (
-              <div key={child.id || idx} style={{ width: equalWidth, flexShrink: 0, minWidth: 0 }}>
-                {item}
-              </div>
-            )
-          })}
+        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, alignItems: 'stretch' }}>
+          {children.map((child, idx) => (
+            <div key={child.id || idx} style={buildHorizontalStyle(child)}>
+              {child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
+                : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
+                : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
+                : null}
+            </div>
+          ))}
         </div>
       ) : (
         <div className="block-schema__children">
@@ -877,7 +876,7 @@ function CardPreview({ card, stretch }) {
     </div>
   )
 
-  if (cardWidth !== 'auto') {
+  if (cardWidth !== 'auto' && !stretch) {
     return <div className="block-schema__card-sized" style={wrapStyle}>{result}</div>
   }
   return result
