@@ -926,6 +926,7 @@ input:focus:not(:focus-visible) {
 .block-schema__children--horizontal > * {
   flex: 1 1 0;
   min-width: 0;
+  width: 0;
 }
 
 .block-schema__children--horizontal > .block-schema__card-sized {
