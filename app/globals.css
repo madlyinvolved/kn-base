@@ -896,6 +896,12 @@ input:focus:not(:focus-visible) {
 
 .block-schema__children--horizontal > .block-schema__section {
   align-self: stretch;
+  width: auto !important;
+}
+
+.block-schema__children--horizontal > .block-schema__card-wrap > .block-schema__card {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .block-schema__section-title {
