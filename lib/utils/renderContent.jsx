@@ -127,7 +127,7 @@ function renderNode(node, key) {
     case 'contactCards':
       return renderContactCards(node, key)
     case 'blockSchema':
-      return <SchemaPreview key={key} elements={node.attrs?.data?.elements || []} />
+      return <SchemaPreview key={key} elements={node.attrs?.data?.elements || []} title={node.attrs?.data?.title} />
     case 'text':
       return renderTextNode(node, key)
     default:

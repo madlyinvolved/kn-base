@@ -890,6 +890,15 @@ input:focus:not(:focus-visible) {
   margin: 1.5em 0;
 }
 
+.block-schema__title {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
 .block-schema > .block-schema__section {
   align-self: center;
 }

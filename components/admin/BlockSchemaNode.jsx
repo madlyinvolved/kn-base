@@ -584,8 +584,12 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
   const data = node.attrs.data || { elements: [] }
   const [editing, setEditing] = useState(!data.elements.length)
 
+  function setData(patch) {
+    updateAttributes({ data: { ...data, ...patch } })
+  }
+
   function setElements(elements) {
-    updateAttributes({ data: { elements } })
+    updateAttributes({ data: { ...data, elements } })
   }
 
   function updateEl(idx, el) {
@@ -632,6 +636,13 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
             Конструктор блок-схемы
           </div>
 
+          <input
+            style={{ ...inputStyle, fontWeight: 600, fontSize: '0.9375rem', marginBottom: '12px', textAlign: 'center' }}
+            value={data.title || ''}
+            onChange={(e) => setData({ title: e.target.value })}
+            placeholder="Заголовок схемы (необязательно)"
+          />
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {data.elements.map((el, idx) => {
               const item = el.type === 'section' ? (
@@ -675,7 +686,7 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
           margin: '16px 0',
         }}
       >
-        <SchemaPreview elements={data.elements} />
+        <SchemaPreview elements={data.elements} title={data.title} />
 
         {selected && (
           <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
@@ -690,11 +701,12 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
 
 /* ===== Preview (portal + editor preview mode) ===== */
 
-export function SchemaPreview({ elements }) {
+export function SchemaPreview({ elements, title }) {
   if (!elements?.length) return null
 
   return (
     <div className="block-schema">
+      {title && <div className="block-schema__title">{title}</div>}
       {elements.map((el, idx) => {
         if (el.type === 'section') return <SectionPreview key={el.id || idx} section={el} />
         if (el.type === 'arrow') return <ArrowPreview key={el.id || idx} arrow={el} />
