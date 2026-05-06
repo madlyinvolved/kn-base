@@ -917,7 +917,7 @@ input:focus:not(:focus-visible) {
 
 .block-schema__children--horizontal {
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: flex-start;
   gap: 12px;
@@ -925,7 +925,7 @@ input:focus:not(:focus-visible) {
 
 .block-schema__children--horizontal > * {
   flex: 1 1 0;
-  min-width: 120px;
+  min-width: 0;
 }
 
 .block-schema__children--horizontal > .block-schema__card-sized {
