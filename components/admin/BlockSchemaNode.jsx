@@ -725,6 +725,14 @@ function SectionPreview({ section }) {
     return { flex: '1 1 0', minWidth: 0, overflow: 'hidden' }
   }
 
+  function buildVerticalCardStyle(child) {
+    const fixed = getChildWidth(child)
+    if (fixed != null) {
+      return { width: `${fixed}%`, margin: '0 auto' }
+    }
+    return { width: '100%' }
+  }
+
   return (
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
@@ -742,7 +750,13 @@ function SectionPreview({ section }) {
       ) : (
         <div className="block-schema__children">
           {children.map((child, idx) => {
-            if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} stretch />
+            if (child.type === 'card') {
+              return (
+                <div key={child.id || idx} style={buildVerticalCardStyle(child)}>
+                  <CardPreview card={child} stretch />
+                </div>
+              )
+            }
             if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
             if (child.type === 'section') return <SectionPreview key={child.id || idx} section={child} />
             return null
