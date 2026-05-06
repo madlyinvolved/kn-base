@@ -915,8 +915,25 @@ input:focus:not(:focus-visible) {
   gap: 6px;
 }
 
+.block-schema__children--horizontal {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.block-schema__children--horizontal > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .block-schema__children--horizontal .block-schema__children {
   align-items: stretch;
+}
+
+.block-schema__children--compact > * {
+  flex: 0 1 auto;
 }
 
 .block-schema__card {

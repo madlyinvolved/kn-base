@@ -699,9 +699,6 @@ export function SchemaPreview({ elements }) {
 
   return (
     <div className="block-schema">
-      <div style={{ fontSize: '10px', color: 'red', textAlign: 'left', wordBreak: 'break-all' }}>
-        DEBUG: {JSON.stringify(elements.map(e => ({ t: e.type, layout: e.layout, ch: e.children?.length })))}
-      </div>
       {elements.map((el, idx) => {
         if (el.type === 'section') return <SectionPreview key={el.id || idx} section={el} />
         if (el.type === 'arrow') return <ArrowPreview key={el.id || idx} arrow={el} />
@@ -719,10 +716,6 @@ function SectionPreview({ section }) {
 
   const sectionStyle = { width: `${width}%` }
 
-  let childrenClass = 'block-schema__children'
-  if (isHorizontal) childrenClass += ' block-schema__children--horizontal'
-  if (isCompact) childrenClass += ' block-schema__children--compact'
-
   const children = section.children || []
   const childCount = children.length
   const gap = 12
@@ -732,26 +725,23 @@ function SectionPreview({ section }) {
 
   return (
     <div className="block-schema__section" style={sectionStyle}>
-      <div style={{ fontSize: '10px', color: 'blue' }}>
-        SEC: layout={section.layout} horiz={String(isHorizontal)} kids={children.length} types={children.map(c=>c.type).join(',')}
-      </div>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
-      {isHorizontal ? (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, justifyContent: 'center', alignItems: 'flex-start', outline: '2px dashed blue' }}>
+      {isHorizontal && !isCompact ? (
+        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, alignItems: 'flex-start' }}>
           {children.map((child, idx) => {
             const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
               : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
               : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
               : null
             return (
-              <div key={child.id || idx} style={{ width: equalWidth, flexShrink: 0, minWidth: 0, outline: '2px solid red' }}>
+              <div key={child.id || idx} style={{ width: equalWidth, flexShrink: 0, minWidth: 0 }}>
                 {item}
               </div>
             )
           })}
         </div>
       ) : (
-        <div className={childrenClass}>
+        <div className={`block-schema__children${isHorizontal ? ' block-schema__children--horizontal' : ''}${isCompact ? ' block-schema__children--compact' : ''}`}>
           {children.map((child, idx) => {
             if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
             if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
