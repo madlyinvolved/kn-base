@@ -726,7 +726,7 @@ function SectionPreview({ section }) {
   return (
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
-      {isHorizontal && !isCompact ? (
+      {isHorizontal ? (
         <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, alignItems: 'flex-start' }}>
           {children.map((child, idx) => {
             const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
@@ -741,7 +741,7 @@ function SectionPreview({ section }) {
           })}
         </div>
       ) : (
-        <div className={`block-schema__children${isHorizontal ? ' block-schema__children--horizontal' : ''}${isCompact ? ' block-schema__children--compact' : ''}`}>
+        <div className="block-schema__children">
           {children.map((child, idx) => {
             if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
             if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
