@@ -742,7 +742,7 @@ function SectionPreview({ section }) {
       ) : (
         <div className="block-schema__children">
           {children.map((child, idx) => {
-            if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
+            if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} stretch />
             if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
             if (child.type === 'section') return <SectionPreview key={child.id || idx} section={child} />
             return null
