@@ -283,7 +283,7 @@ function InlineArrowEditor({ arrow, onChange, onRemove }) {
   )
 }
 
-function CardEditor({ card, onChange, onRemove, onAddArrowAfter }) {
+function CardEditor({ card, onChange, onRemove }) {
   function set(field, value) {
     onChange({ ...card, [field]: value })
   }
@@ -360,12 +360,6 @@ function CardEditor({ card, onChange, onRemove, onAddArrowAfter }) {
         <input type="checkbox" checked={!!card.filled} onChange={(e) => set('filled', e.target.checked)} />
         Залить цветом
       </label>
-
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
-        <button type="button" style={{ ...smallBtn, padding: '1px 8px', fontSize: '0.6875rem' }} onClick={onAddArrowAfter} title="Добавить стрелку после">
-          + ↓
-        </button>
-      </div>
     </div>
   )
 }
@@ -395,9 +389,10 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
     setField('children', [...section.children, emptySection()])
   }
 
-  function addArrowAfter(idx) {
+  function insertChildAt(idx, type) {
+    const creators = { arrow: emptyArrow, card: emptyCard, section: emptySection }
     const next = [...section.children]
-    next.splice(idx + 1, 0, emptyArrow())
+    next.splice(idx, 0, (creators[type] || emptyCard)())
     setField('children', next)
   }
 
@@ -444,31 +439,25 @@ function SectionEditor({ section, onChange, onRemove, depth = 0 }) {
         </button>
       </div>
 
-      <div style={{
-        display: 'flex',
-        flexDirection: isHorizontal ? 'row' : 'column',
-        gap: '8px',
-        flexWrap: isHorizontal ? 'wrap' : 'nowrap',
-      }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
         {section.children.map((child, idx) => (
-          <div key={child.id || idx} style={{ flex: isHorizontal ? '1 1 0' : undefined, minWidth: isHorizontal ? '140px' : undefined, position: 'relative' }}>
-            {section.children.length > 1 && child.type !== 'arrow' && (
-              <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
-                <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>
-                  {isHorizontal ? '←' : '↑'}
-                </button>
-                <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)}>
-                  {isHorizontal ? '→' : '↓'}
-                </button>
-              </div>
-            )}
-            {child.type === 'card' ? (
-              <CardEditor card={child} onChange={(c) => updateChild(idx, c)} onRemove={() => removeChild(idx)} onAddArrowAfter={() => addArrowAfter(idx)} />
-            ) : child.type === 'arrow' ? (
-              <InlineArrowEditor arrow={child} onChange={(a) => updateChild(idx, a)} onRemove={() => removeChild(idx)} />
-            ) : child.type === 'section' ? (
-              <SectionEditor section={child} onChange={(s) => updateChild(idx, s)} onRemove={() => removeChild(idx)} depth={depth + 1} />
-            ) : null}
+          <div key={child.id || idx}>
+            {idx > 0 && <InsertBetweenButton onInsert={(type) => insertChildAt(idx, type)} />}
+            <div style={{ position: 'relative' }}>
+              {section.children.length > 1 && child.type !== 'arrow' && (
+                <div style={{ display: 'flex', gap: '2px', marginBottom: '4px', justifyContent: 'center' }}>
+                  <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, -1)}>↑</button>
+                  <button type="button" style={{ ...smallBtn, padding: '1px 6px', fontSize: '0.625rem' }} onClick={() => moveChild(idx, 1)}>↓</button>
+                </div>
+              )}
+              {child.type === 'card' ? (
+                <CardEditor card={child} onChange={(c) => updateChild(idx, c)} onRemove={() => removeChild(idx)} />
+              ) : child.type === 'arrow' ? (
+                <InlineArrowEditor arrow={child} onChange={(a) => updateChild(idx, a)} onRemove={() => removeChild(idx)} />
+              ) : child.type === 'section' ? (
+                <SectionEditor section={child} onChange={(s) => updateChild(idx, s)} onRemove={() => removeChild(idx)} depth={depth + 1} />
+              ) : null}
+            </div>
           </div>
         ))}
       </div>
@@ -626,7 +615,7 @@ function BlockSchemaView({ node, updateAttributes, deleteNode, selected }) {
               ) : el.type === 'arrow' ? (
                 <ArrowEditor key={el.id || idx} arrow={el} onChange={(a) => updateEl(idx, a)} onRemove={() => removeEl(idx)} />
               ) : el.type === 'card' ? (
-                <CardEditor key={el.id || idx} card={el} onChange={(c) => updateEl(idx, c)} onRemove={() => removeEl(idx)} onAddArrowAfter={() => insertAt(idx + 1, 'arrow')} />
+                <CardEditor key={el.id || idx} card={el} onChange={(c) => updateEl(idx, c)} onRemove={() => removeEl(idx)} />
               ) : null
 
               return (
