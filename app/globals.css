@@ -1046,9 +1046,11 @@ input:focus:not(:focus-visible) {
 
 .block-schema__card-wrap {
   position: relative;
+}
+.block-schema > .block-schema__card-wrap {
   align-self: center;
 }
-.block-schema__card-sized {
+.block-schema > .block-schema__card-sized {
   align-self: center;
 }
 .block-schema__card-wrap--has-tooltip > .block-schema__card {
