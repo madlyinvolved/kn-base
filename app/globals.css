@@ -915,8 +915,21 @@ input:focus:not(:focus-visible) {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+}
+
+.block-schema__children--horizontal > * {
+  flex: 1 1 0;
+  min-width: 120px;
+}
+
+.block-schema__children--horizontal > .block-schema__card-sized {
+  flex: none;
+}
+
+.block-schema__children--horizontal .block-schema__children {
+  align-items: stretch;
 }
 
 .block-schema__card {
@@ -928,10 +941,13 @@ input:focus:not(:focus-visible) {
   border: 1px solid var(--color-border);
   font-size: 0.875rem;
   line-height: 1.35;
-  width: 100%;
+  word-break: break-word;
+}
+
+.block-schema > .block-schema__card-wrap,
+.block-schema > .block-schema__card-sized {
   max-width: 300px;
   text-align: center;
-  word-break: break-word;
 }
 
 .block-schema__card-text {
