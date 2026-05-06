@@ -720,7 +720,7 @@ function SectionPreview({ section }) {
   function buildHorizontalStyle(child) {
     const fixed = getChildWidth(child)
     if (fixed != null) {
-      return { flex: 'none', width: `calc(${fixed}% - ${gap / 2}px)`, minWidth: 0, overflow: 'hidden' }
+      return { flex: `0 0 ${fixed}%`, minWidth: 0, overflow: 'hidden' }
     }
     return { flex: '1 1 0', minWidth: 0, overflow: 'hidden' }
   }
@@ -729,7 +729,7 @@ function SectionPreview({ section }) {
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
       {isHorizontal ? (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, alignItems: 'stretch', justifyContent: 'center' }}>
           {children.map((child, idx) => (
             <div key={child.id || idx} style={buildHorizontalStyle(child)}>
               {child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
