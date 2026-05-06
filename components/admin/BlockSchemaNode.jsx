@@ -510,45 +510,26 @@ function InsertBetweenButton({ onInsert }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0',
-        position: 'relative',
-      }}
-    >
-      <div
+    <div style={{ height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '16px',
+          lineHeight: 1,
+          color: 'var(--color-text-secondary)',
+          opacity: open ? 1 : 0.3,
+          transition: 'opacity 150ms ease',
+          padding: '0 4px',
         }}
-        className={open ? 'block-schema__insert-between block-schema__insert-between--open' : 'block-schema__insert-between'}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
+        onMouseLeave={(e) => { if (!open) e.currentTarget.style.opacity = '0.3' }}
       >
-        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          style={{
-            ...smallBtn,
-            fontSize: '0.75rem',
-            padding: '0 6px',
-            lineHeight: '16px',
-            borderRadius: '50%',
-            width: '18px',
-            height: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          +
-        </button>
-        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
-      </div>
+        +
+      </button>
       {open && (
         <div style={{
           position: 'absolute',
@@ -562,7 +543,7 @@ function InsertBetweenButton({ onInsert }) {
           padding: '4px 6px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
         }}>
-          <button type="button" style={smallBtn} onClick={() => { onInsert('arrow'); setOpen(false) }}>Стрелка</button>
+          <button type="button" style={smallBtn} onClick={() => { onInsert('arrow'); setOpen(false) }}>↓ Стрелка</button>
           <button type="button" style={smallBtn} onClick={() => { onInsert('card'); setOpen(false) }}>Карточка</button>
           <button type="button" style={smallBtn} onClick={() => { onInsert('section'); setOpen(false) }}>Секция</button>
         </div>

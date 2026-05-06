@@ -915,16 +915,8 @@ input:focus:not(:focus-visible) {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   gap: 12px;
-}
-
-.block-schema__children--horizontal > * {
-  flex: 1 1 0;
-  min-width: 120px;
-}
-
-.block-schema__children--horizontal > .block-schema__card-sized {
-  flex: none;
 }
 
 .block-schema__card {
@@ -1030,16 +1022,6 @@ input:focus:not(:focus-visible) {
   color: var(--color-text-secondary);
   user-select: none;
   align-self: center;
-}
-
-.block-schema__insert-between {
-  opacity: 0;
-  transition: opacity 150ms ease;
-  padding: 2px 0;
-}
-.block-schema__insert-between:hover,
-.block-schema__insert-between--open {
-  opacity: 0.6;
 }
 
 .block-schema__card-wrap {
