@@ -731,14 +731,14 @@ function SectionPreview({ section }) {
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
       {isHorizontal ? (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, justifyContent: 'center', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: `${gap}px`, justifyContent: 'center', alignItems: 'flex-start', outline: '2px dashed blue' }}>
           {children.map((child, idx) => {
             const item = child.type === 'card' ? <CardPreview key={child.id || idx} card={child} stretch />
               : child.type === 'arrow' ? <ArrowPreview key={child.id || idx} arrow={child} />
               : child.type === 'section' ? <SectionPreview key={child.id || idx} section={child} />
               : null
             return (
-              <div key={child.id || idx} style={{ width: equalWidth, flexShrink: 0, minWidth: 0 }}>
+              <div key={child.id || idx} style={{ width: equalWidth, flexShrink: 0, minWidth: 0, outline: '2px solid red' }}>
                 {item}
               </div>
             )
