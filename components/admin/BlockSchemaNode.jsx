@@ -720,10 +720,14 @@ function SectionPreview({ section }) {
   if (isHorizontal) childrenClass += ' block-schema__children--horizontal'
   if (isCompact) childrenClass += ' block-schema__children--compact'
 
+  const childrenStyle = isHorizontal && !isCompact
+    ? { display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '1fr', gap: '12px', alignItems: 'start' }
+    : undefined
+
   return (
     <div className="block-schema__section" style={sectionStyle}>
       {section.title && <div className="block-schema__section-title">{section.title}</div>}
-      <div className={childrenClass}>
+      <div className={childrenClass} style={childrenStyle}>
         {(section.children || []).map((child, idx) => {
           if (child.type === 'card') return <CardPreview key={child.id || idx} card={child} />
           if (child.type === 'arrow') return <ArrowPreview key={child.id || idx} arrow={child} />
