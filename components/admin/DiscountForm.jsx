@@ -79,7 +79,7 @@ const EMPTY = {
   short_description: '',
   full_description: '',
   conditions: '',
-  promo_code: '',
+  promo_codes: [{ code: '', description: '' }],
   link: '',
   valid_until: '',
   is_active: true,
@@ -89,6 +89,9 @@ export default function DiscountForm({ discount }) {
   const isEdit = !!discount
   const [form, setForm] = useState(() => {
     if (!discount) return EMPTY
+    const codes = Array.isArray(discount.promo_codes) && discount.promo_codes.length
+      ? discount.promo_codes
+      : [{ code: '', description: '' }]
     return {
       partner_name: discount.partner_name || '',
       category: discount.category || 'sport',
@@ -96,7 +99,7 @@ export default function DiscountForm({ discount }) {
       short_description: discount.short_description || '',
       full_description: discount.full_description || '',
       conditions: discount.conditions || '',
-      promo_code: discount.promo_code || '',
+      promo_codes: codes,
       link: discount.link || '',
       valid_until: discount.valid_until || '',
       is_active: discount.is_active !== false,
@@ -153,7 +156,7 @@ export default function DiscountForm({ discount }) {
         short_description: form.short_description.trim() || null,
         full_description: form.full_description.trim() || null,
         conditions: form.conditions.trim() || null,
-        promo_code: form.promo_code.trim() || null,
+        promo_codes: form.promo_codes.filter((p) => p.code.trim()).map((p) => ({ code: p.code.trim(), description: p.description.trim() })),
         link: form.link.trim() || null,
         logo_url,
         valid_until: form.valid_until || null,
@@ -214,16 +217,56 @@ export default function DiscountForm({ discount }) {
           <textarea style={{ ...textareaStyle, minHeight: '80px' }} value={form.conditions} onChange={(e) => set('conditions', e.target.value)} placeholder="Условия получения скидки..." />
         </label>
 
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Промокод
-            <input style={inputStyle} value={form.promo_code} onChange={(e) => set('promo_code', e.target.value)} placeholder="ADCORP25" />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Ссылка
-            <input style={inputStyle} value={form.link} onChange={(e) => set('link', e.target.value)} placeholder="https://..." />
-          </label>
+        <div style={{ ...labelStyle, marginBottom: '16px' }}>
+          Промокоды
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+            {form.promo_codes.map((p, i) => (
+              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  style={{ ...inputStyle, flex: 1, marginTop: 0 }}
+                  value={p.code}
+                  onChange={(e) => {
+                    const next = [...form.promo_codes]
+                    next[i] = { ...next[i], code: e.target.value }
+                    set('promo_codes', next)
+                  }}
+                  placeholder="ADCORP25"
+                />
+                <input
+                  style={{ ...inputStyle, flex: 1, marginTop: 0 }}
+                  value={p.description}
+                  onChange={(e) => {
+                    const next = [...form.promo_codes]
+                    next[i] = { ...next[i], description: e.target.value }
+                    set('promo_codes', next)
+                  }}
+                  placeholder="Описание (необязательно)"
+                />
+                {form.promo_codes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => set('promo_codes', form.promo_codes.filter((_, j) => j !== i))}
+                    style={{ ...btnStyle, padding: '6px 10px', color: '#dc2626', borderColor: '#fecaca', flexShrink: 0 }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => set('promo_codes', [...form.promo_codes, { code: '', description: '' }])}
+            style={{ ...btnStyle, marginTop: '8px', fontSize: '0.75rem' }}
+          >
+            + Добавить промокод
+          </button>
         </div>
+
+        <label style={labelStyle}>
+          Ссылка
+          <input style={inputStyle} value={form.link} onChange={(e) => set('link', e.target.value)} placeholder="https://..." />
+        </label>
 
         <label style={labelStyle}>
           Логотип

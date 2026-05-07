@@ -35,7 +35,7 @@ function renderDescription(text) {
 export default function DiscountsClient({ discounts }) {
   const [filter, setFilter] = useState('all')
   const [selected, setSelected] = useState(null)
-  const [copied, setCopied] = useState(false)
+  const [copiedCode, setCopiedCode] = useState(null)
 
   const filtered = filter === 'all' ? discounts : discounts.filter((d) => d.category === filter)
 
@@ -57,8 +57,8 @@ export default function DiscountsClient({ discounts }) {
 
   async function copyPromo(code) {
     await navigator.clipboard.writeText(code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    setCopiedCode(code)
+    setTimeout(() => setCopiedCode(null), 1500)
   }
 
   const pills = [
@@ -122,7 +122,7 @@ export default function DiscountsClient({ discounts }) {
           discount={selected}
           onClose={() => setSelected(null)}
           onCopyPromo={copyPromo}
-          copied={copied}
+          copiedCode={copiedCode}
         />
       )}
     </div>
@@ -200,7 +200,7 @@ function DiscountCard({ discount, onClick }) {
   )
 }
 
-function DiscountModal({ discount, onClose, onCopyPromo, copied }) {
+function DiscountModal({ discount, onClose, onCopyPromo, copiedCode }) {
   const cat = getCat(discount.category)
 
   return (
@@ -304,42 +304,54 @@ function DiscountModal({ discount, onClose, onCopyPromo, copied }) {
           </div>
         )}
 
-        {discount.promo_code && (
+        {discount.promo_codes?.length > 0 && (
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Промокод</div>
-            <button
-              onClick={() => onCopyPromo(discount.promo_code)}
-              style={{
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                fontWeight: 600,
-                padding: '8px 16px',
-                background: cat.bg,
-                color: cat.color,
-                border: `1px dashed ${cat.color}`,
-                borderRadius: '8px',
-                cursor: 'pointer',
-                position: 'relative',
-              }}
-            >
-              {discount.promo_code}
-              {copied && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-28px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: 'var(--color-text)',
-                  color: 'var(--color-surface)',
-                  fontSize: '11px',
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                }}>
-                  Скопировано!
-                </span>
-              )}
-            </button>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              {discount.promo_codes.length > 1 ? 'Промокоды' : 'Промокод'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {discount.promo_codes.map((p, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    onClick={() => onCopyPromo(p.code)}
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      padding: '8px 16px',
+                      background: cat.bg,
+                      color: cat.color,
+                      border: `1px dashed ${cat.color}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {p.code}
+                    {copiedCode === p.code && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '-28px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'var(--color-text)',
+                        color: 'var(--color-surface)',
+                        fontSize: '11px',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        Скопировано!
+                      </span>
+                    )}
+                  </button>
+                  {p.description && (
+                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{p.description}</span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
