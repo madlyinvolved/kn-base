@@ -68,6 +68,7 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Дашборд', icon: '📊' },
   { href: '/admin/articles', label: 'Статьи', icon: '📝' },
   { href: '/admin/categories', label: 'Категории', icon: '📁' },
+  { href: '/admin/discounts', label: 'Скидки', icon: '🏷️' },
   { href: '/admin/users', label: 'Пользователи', icon: '👥' },
 ]
 
