@@ -277,9 +277,19 @@ function DiscountModal({ discount, onClose, onCopyPromo, copiedCode }) {
             <div style={{ fontWeight: 700, fontSize: '16px' }}>{discount.partner_name}</div>
             <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>{cat.label}</div>
           </div>
-          <div style={{ fontWeight: 700, fontSize: '20px', color: cat.color }}>
-            {discount.discount_value}
-          </div>
+        </div>
+
+        <div style={{
+          fontSize: '28px',
+          fontWeight: 700,
+          color: cat.color,
+          background: cat.bg,
+          padding: '8px 20px',
+          borderRadius: '10px',
+          textAlign: 'center',
+          margin: '12px 0 16px',
+        }}>
+          {discount.discount_value}
         </div>
 
         {discount.full_description && (
