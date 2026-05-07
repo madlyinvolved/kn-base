@@ -186,9 +186,13 @@ function DiscountCard({ discount, onClick }) {
         <div style={{ fontWeight: 500, fontSize: '16px', color: cat.color }}>
           {discount.discount_value}
         </div>
-        {discount.valid_until && (
+        {discount.valid_until ? (
           <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
             до {formatDate(discount.valid_until)}
+          </div>
+        ) : (
+          <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+            бессрочно
           </div>
         )}
       </div>
@@ -363,11 +367,9 @@ function DiscountModal({ discount, onClose, onCopyPromo, copied }) {
           </a>
         )}
 
-        {discount.valid_until && (
-          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '8px' }}>
-            Действует до {formatDate(discount.valid_until)}
-          </div>
-        )}
+        <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '8px' }}>
+          {discount.valid_until ? `Действует до ${formatDate(discount.valid_until)}` : 'Бессрочно'}
+        </div>
       </div>
     </div>
   )
